@@ -1,4 +1,5 @@
 import math
+import random
 import sys
 
 import pygame
@@ -112,9 +113,11 @@ class Pipe(Rectangle):
     The x/y position is the top left point of the pipe sprite
     """
     img: pygame.Surface
+    top: bool
 
     def __init__(self, x, y, top):
         super().__init__(x, y, const.PIPE_X, const.PIPE_Y)
+        self.top = top
         if top:
             self.img = img_pipe_top
         else:
@@ -122,6 +125,13 @@ class Pipe(Rectangle):
 
     def update(self, game_state):
         self.x -= game_state.pipe_speed
+        # Relocate if needed
+        if self.x < const.PIPE_TRASH:
+            self.x = const.PIPE_SPAWN
+            if self.top:
+                self.y = random.randrange(const.PIPE_MIN, const.PIPE_MAX) - const.PIPE_Y
+            else:
+                self.y = const.HEIGHT - random.randrange(const.PIPE_MIN, const.PIPE_MAX)
 
     def draw(self, game_state, surface: pygame.Surface):
         surface.blit(self.img, [self.x, self.y])
@@ -234,10 +244,10 @@ class GameState:
         self.bird = Bird(50, 500)
 
         self.entities = list()
-        add_pipe_pair(self.entities, 100, 50, 200)
-        add_pipe_pair(self.entities, 200, 100, 150)
-        add_pipe_pair(self.entities, 300, 150, 100)
-        add_pipe_pair(self.entities, 400, 200, 50)
+        # Spawn pipes with their set distances, need to include trash distance for consistency
+        add_pipe_pair(self.entities, (const.PIPE_TRASH + const.WIDTH), 200, 400)
+        add_pipe_pair(self.entities, (const.PIPE_TRASH + const.WIDTH) * 1.4, 250, 300)
+        add_pipe_pair(self.entities, (const.PIPE_TRASH + const.WIDTH) * 1.8, 300, 200)
 
         if debug:
             self.entities.append(MouseLine())
@@ -267,20 +277,8 @@ class GameState:
             self.game.blit(self.background, (const.WIDTH + self.bg_i, 0))
         self.bg_i -= 1
 
-        # Bad workaround, we remove pipes one at a time but add them two at a time
-        spawn_pipes = False
         for entity in self.entities:
             entity.update(self)
-            # Respawn pipes if needed
-            # FUTURE: Handle pipes better, just move them to the right
-            if isinstance(entity, Pipe):
-                if entity.x < const.PIPE_TRASH:
-                    # Self modification issues?
-                    self.entities.remove(entity)
-                    spawn_pipes = True
-
-        if spawn_pipes:
-            add_pipe_pair(self.entities, 100, 50, 400)
 
         self.bird.update(self)
 

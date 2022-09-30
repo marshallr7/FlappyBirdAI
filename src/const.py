@@ -4,14 +4,15 @@ HEIGHT = 800
 # Size of pipe image
 PIPE_X = 52
 PIPE_Y = 320
-# Game Settings
-INIT_SPEED = 5
-GAIN_SPEED = 0.0000000001
-PIPE_MIN = 100
-PIPE_MAX = HEIGHT - PIPE_MIN
-PIPE_GAP_MIN = HEIGHT / 4
-PIPE_GAP_MAX = HEIGHT / 2
+# Pipe Speed/Increase
+INIT_SPEED = 1
+GAIN_SPEED = 0.00001
+# Pipe gap Min/Max distance from screen bounds
+PIPE_MIN = 150
+PIPE_MAX = 320
+# Where pipes are relocated to
 PIPE_SPAWN = WIDTH
+# Where pipes must be moved from
 PIPE_TRASH = -1 * PIPE_X
 # Bird Bounds
 BIRD_MIN_Y = 50
