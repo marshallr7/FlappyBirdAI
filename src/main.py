@@ -4,35 +4,40 @@ import pygame
 import const
 
 
-class Bird:
-    def __init__(self, x, y, image):
-        self.x = x
-        self.height = y
-        self.image = image
-
-    def jump(self, y):
-        self.height = y
-
-    def get_image(self):
-        return self.image
-
-
 class DrawableEntity:
+    # Absolute positions can change based on the object
+    # Circle position is center, rectangle is top left, etc
+    x: int
+    y: int
+    
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+    
     def draw(self, surface: pygame.Surface):
         # Error, this should be implemented
         # No abstract classes in plain python?
         assert False
 
 
+class Bird(DrawableEntity):
+    def __init__(self, x, y, image):
+        super().__init__(x, y)
+        self.image = image
+
+    def jump(self, y):
+        self.y = y
+
+    def get_image(self):
+        return self.image
+
+
 class Rectangle(DrawableEntity):
-    tl_x: int
-    tl_y: int
     size_x: int
     size_y: int
 
-    def __init__(self, tl_x, tl_y, size_x, size_y):
-        self.tl_x = tl_x
-        self.tl_y = tl_y
+    def __init__(self, x, y, size_x, size_y):
+        super().__init__(x, y)
         self.size_x = size_x
         self.size_y = size_y
 
@@ -42,20 +47,21 @@ class Rectangle(DrawableEntity):
         This is calculated by adding half of the size to the top left coordinate
         :return: a 2 entry list of the x and y positions respectively
         """
-        return [self.tl_x + (self.size_x / 2), self.tl_y + (self.size_y / 2)]
+        return [self.x + (self.size_x / 2), self.y + (self.size_y / 2)]
 
     def draw(self, surface: pygame.Surface):
-        pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.tl_x, self.tl_y, self.size_x, self.size_y))
+        pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.x, self.y, self.size_x, self.size_y))
 
 
 class MouseLine(DrawableEntity):
-    # Center coordinates
-    x: int
-    y: int
     # The distance to the closest point
     dist: float
     # The point we are closest to
     point: list[int]
+
+    def __init__(self):
+        # The position of this entity updates every frame
+        super().__init__(0, 0)
 
     def dist_to_rect_side(self, rectangle: Rectangle) -> tuple[float, list[int]]:
         """
@@ -77,37 +83,37 @@ class MouseLine(DrawableEntity):
         #     66 # 77 # 88
 
         # Rectangle sides as 1D planes
-        left = rectangle.tl_x
-        right = rectangle.tl_x + rectangle.size_x
-        top = rectangle.tl_y
-        bot = rectangle.tl_y + rectangle.size_y
+        left = rectangle.x
+        right = rectangle.x + rectangle.size_x
+        top = rectangle.y
+        bot = rectangle.y + rectangle.size_y
 
         # The point to check distance to
         p: list[int]
         # State 1
         if self.x < left and self.y < top:
-            p = [rectangle.tl_x, rectangle.tl_y]
+            p = [rectangle.x, rectangle.y]
         # State 3
         elif self.x > right and self.y < top:
-            p = [rectangle.tl_x + rectangle.size_x, rectangle.tl_y]
+            p = [rectangle.x + rectangle.size_x, rectangle.y]
         # State 6
         elif self.x < left and self.y > bot:
-            p = [rectangle.tl_x, rectangle.tl_y + rectangle.size_y]
+            p = [rectangle.x, rectangle.y + rectangle.size_y]
         # State 8
         elif self.x > right and self.y > bot:
-            p = [rectangle.tl_x + rectangle.size_x, rectangle.tl_y + rectangle.size_y]
+            p = [rectangle.x + rectangle.size_x, rectangle.y + rectangle.size_y]
         # State 2
         elif self.y < top:
-            p = [self.x, rectangle.tl_y]
+            p = [self.x, rectangle.y]
         # State 7
         elif self.y > bot:
-            p = [self.x, rectangle.tl_y + rectangle.size_y]
+            p = [self.x, rectangle.y + rectangle.size_y]
         # State 4
         elif self.x < left:
-            p = [rectangle.tl_x, self.y]
+            p = [rectangle.x, self.y]
         # State 5
         else:
-            p = [rectangle.tl_x + rectangle.size_x, self.y]
+            p = [rectangle.x + rectangle.size_x, self.y]
 
         return math.dist([self.x, self.y], p), p
 
@@ -153,7 +159,7 @@ i = 0
 while True:
     game.blit(background, (i, 0))
     game.blit(background, (const.WIDTH + i, 0))
-    game.blit(bird.get_image(), (bird.x, bird.height))
+    game.blit(bird.get_image(), (bird.x, bird.y))
 
     for entity in entities:
         entity.draw(game)
@@ -167,5 +173,5 @@ while True:
             exit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
-                bird.jump(bird.height + -25)
+                bird.jump(bird.y + -25)
     pygame.display.update()
