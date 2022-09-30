@@ -21,6 +21,14 @@ class DrawableEntity:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+
+    def update(self, game_state):
+        """
+        Update the entity before being drawn, if needed.
+        :param game_state: the GameState instance this entity belongs to
+        :return: None
+        """
+        pass
     
     def draw(self, game_state, surface: pygame.Surface):
         # Error, this should be implemented
@@ -148,7 +156,7 @@ class MouseLine(DrawableEntity):
 
         return math.dist([self.x, self.y], p), p
 
-    def draw(self, game_state, surface: pygame.Surface):
+    def update(self, game_state):
         # Compare distance to the mouse position
         mouse_pos = pygame.mouse.get_pos()
         self.x = mouse_pos[0]
@@ -163,6 +171,7 @@ class MouseLine(DrawableEntity):
                     self.dist = dist_tuple[0]
                     self.point = dist_tuple[1]
 
+    def draw(self, game_state, surface: pygame.Surface):
         pygame.draw.line(surface, (255, 0, 255), [self.x, self.y], self.point)
 
 
@@ -210,7 +219,8 @@ class GameState:
         Update entities before drawing them.
         :return: None
         """
-        pass
+        for entity in self.entities:
+            entity.update(self)
 
     def do_draw(self):
         """
