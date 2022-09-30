@@ -37,11 +37,37 @@ class DrawableEntity:
 
 
 class Bird(DrawableEntity):
+    """
+    A bird which can be controlled by the player or an AI.
+    """
+    # The y velocity of the bird
+    velocity: float
+
     def __init__(self, x, y):
         super().__init__(x, y)
+        self.velocity = 0
 
-    def jump(self, y):
-        self.y = y
+    def jump(self):
+        self.velocity += const.JUMP_VELOCITY
+
+    def update(self, game_state):
+        # Gravity update
+        self.velocity += const.GRAVITY
+
+        # Bounds check
+        if self.velocity > const.MAX_VELOCITY:
+            self.velocity = const.MAX_VELOCITY
+        elif self.velocity < const.MIN_VELOCITY:
+            self.velocity = const.MIN_VELOCITY
+
+        # Position Update
+        self.y += self.velocity
+
+        # Position Check
+        if self.y > 750:
+            self.y = 750
+
+        print(self.velocity)
 
     def draw(self, game_state, surface: pygame.Surface):
         surface.blit(img_bird, (self.x, self.y))
@@ -248,7 +274,7 @@ class GameState:
                 exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    self.bird.jump(self.bird.y + -25)
+                    self.bird.jump()
 
 
 if __name__ == "__main__":
