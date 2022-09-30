@@ -15,8 +15,8 @@ img_background = pygame.transform.scale(img_background, (const.WIDTH, const.HEIG
 class DrawableEntity:
     # Absolute positions can change based on the object
     # Circle position is center, rectangle is top left, etc
-    x: int
-    y: int
+    x: float
+    y: float
     
     def __init__(self, x, y):
         self.x = x
@@ -86,8 +86,8 @@ class Rectangle(DrawableEntity):
     A solid color rectangle.
     The x/y position is the top left of the rectangle
     """
-    size_x: int
-    size_y: int
+    size_x: float
+    size_y: float
 
     def __init__(self, x, y, size_x, size_y):
         super().__init__(x, y)
@@ -131,7 +131,7 @@ class MouseLine(DrawableEntity):
     # The distance to the closest point
     dist: float
     # The point we are closest to
-    point: list[int]
+    point: list[float]
 
     def __init__(self):
         # The position of this entity updates every frame
@@ -139,7 +139,7 @@ class MouseLine(DrawableEntity):
         self.dist = 0
         self.point = [0, 0]
 
-    def dist_to_rect_side(self, rectangle: Rectangle) -> tuple[float, list[int]]:
+    def dist_to_rect_side(self, rectangle: Rectangle) -> tuple[float, list[float]]:
         """
         Calculates the distance to the closest point of a rectangle
         :param rectangle: the rectangle to check
@@ -165,7 +165,7 @@ class MouseLine(DrawableEntity):
         bot = rectangle.y + rectangle.size_y
 
         # The point to check distance to
-        p: list[int]
+        p: list[float]
         # State 1
         if self.x < left and self.y < top:
             p = [rectangle.x, rectangle.y]
