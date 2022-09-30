@@ -62,6 +62,8 @@ class MouseLine(DrawableEntity):
     def __init__(self):
         # The position of this entity updates every frame
         super().__init__(0, 0)
+        self.dist = 0
+        self.point = [0, 0]
 
     def dist_to_rect_side(self, rectangle: Rectangle) -> tuple[float, list[int]]:
         """
