@@ -51,6 +51,18 @@ class Bird(DrawableEntity):
         self.velocity += const.JUMP_VELOCITY
 
     def update(self, game_state):
+        # Position Check
+        # Move the bird to a safe area if needed
+        if self.y < const.BIRD_MIN_Y:
+            self.y = const.BIRD_MIN_Y
+            self.velocity = 0
+            return
+        elif self.y > const.BIRD_MAX_Y:
+            # FUTURE: This will be a death condition
+            self.y = const.BIRD_MAX_Y
+            self.velocity = 0
+            return
+
         # Gravity update
         self.velocity += const.GRAVITY
 
@@ -60,12 +72,8 @@ class Bird(DrawableEntity):
         elif self.velocity < const.MIN_VELOCITY:
             self.velocity = const.MIN_VELOCITY
 
-        # Position Update
+        # Update Position
         self.y += self.velocity
-
-        # Position Check
-        if self.y > 750:
-            self.y = 750
 
         print(self.velocity)
 

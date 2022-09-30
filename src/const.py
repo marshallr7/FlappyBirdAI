@@ -4,6 +4,9 @@ HEIGHT = 800
 # Size of pipe image
 PIPE_X = 52
 PIPE_Y = 320
+# Bird Bounds
+BIRD_MIN_Y = 50
+BIRD_MAX_Y = 705
 # Bird Physics
 # Remember that y=0 is the top of the screen
 GRAVITY = 0.1
