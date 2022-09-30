@@ -1,4 +1,5 @@
 import math
+import sys
 
 import pygame
 import const
@@ -6,6 +7,9 @@ import const
 
 img_pipe_bot = pygame.image.load("../assets/pipe.png")
 img_pipe_top = pygame.transform.flip(img_pipe_bot, False, True)
+img_bird = pygame.image.load("../assets/bird1.png")
+img_background = pygame.image.load("../assets/bg.png")
+img_background = pygame.transform.scale(img_background, (const.WIDTH, const.HEIGHT))
 
 
 class DrawableEntity:
@@ -18,22 +22,18 @@ class DrawableEntity:
         self.x = x
         self.y = y
     
-    def draw(self, surface: pygame.Surface):
+    def draw(self, entities, surface: pygame.Surface):
         # Error, this should be implemented
         # No abstract classes in plain python?
         assert False
 
 
 class Bird(DrawableEntity):
-    def __init__(self, x, y, image):
+    def __init__(self, x, y):
         super().__init__(x, y)
-        self.image = image
 
     def jump(self, y):
         self.y = y
-
-    def get_image(self):
-        return self.image
 
 
 class Rectangle(DrawableEntity):
@@ -57,7 +57,7 @@ class Rectangle(DrawableEntity):
         """
         return [self.x + (self.size_x / 2), self.y + (self.size_y / 2)]
 
-    def draw(self, surface: pygame.Surface):
+    def draw(self, entities: list[DrawableEntity], surface: pygame.Surface):
         pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.x, self.y, self.size_x, self.size_y))
 
 
@@ -75,7 +75,7 @@ class Pipe(Rectangle):
         else:
             self.img = img_pipe_bot
 
-    def draw(self, surface: pygame.Surface):
+    def draw(self, entities: list[DrawableEntity], surface: pygame.Surface):
         surface.blit(self.img, [self.x, self.y])
 
 
@@ -145,7 +145,7 @@ class MouseLine(DrawableEntity):
 
         return math.dist([self.x, self.y], p), p
 
-    def draw(self, surface: pygame.Surface):
+    def draw(self, entities: list[DrawableEntity], surface: pygame.Surface):
         # Compare distance to the mouse position
         mouse_pos = pygame.mouse.get_pos()
         self.x = mouse_pos[0]
@@ -153,7 +153,7 @@ class MouseLine(DrawableEntity):
 
         # Check distances to all rectangles and find the closest
         self.dist = 10000000.0
-        for e in entities:
+        for e in game_state.entities:
             if isinstance(e, Rectangle):
                 dist_tuple = self.dist_to_rect_side(e)
                 if dist_tuple[0] < self.dist:
@@ -167,42 +167,82 @@ def add_pipe_pair(entity_list, x, y, gap):
     entity_list.append(Pipe(x, y - const.PIPE_Y, True))
     entity_list.append(Pipe(x, y + gap, False))
 
-entities = list()
-# Pipes
-add_pipe_pair(entities, 100, 50, 200)
-add_pipe_pair(entities, 200, 100, 150)
-add_pipe_pair(entities, 300, 150, 100)
-add_pipe_pair(entities, 400, 200, 50)
-entities.append(MouseLine())
+
+class GameState:
+    """
+    An organized structure of all entities in the game
+    """
+    game: pygame.Surface
+
+    bird: Bird
+    entities: list[DrawableEntity]
+    background: pygame.Surface
+    bg_i: int
+
+    def __init__(self, debug: bool):
+        self.bird = Bird(50, 500)
+
+        self.entities = list()
+        add_pipe_pair(self.entities, 100, 50, 200)
+        add_pipe_pair(self.entities, 200, 100, 150)
+        add_pipe_pair(self.entities, 300, 150, 100)
+        add_pipe_pair(self.entities, 400, 200, 50)
+
+        if debug:
+            self.entities.append(MouseLine())
+
+        self.background = img_background
+        self.bg_i = 0
+
+    def init_window(self):
+        self.game = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
+        self.bg_i = 0
+
+        pygame.display.set_caption("Flappy Bird AI")
+        clock = pygame.time.Clock()
+        clock.tick(30)
+
+    def do_update(self):
+        """
+        Update entities before drawing them.
+        :return: None
+        """
+        pass
+
+    def do_draw(self):
+        """
+        Draw entities onto the window surface.
+        :return: None
+        """
+        self.game.blit(self.background, (self.bg_i, 0))
+        self.game.blit(self.background, (const.WIDTH + self.bg_i, 0))
+        self.game.blit(img_bird, (self.bird.x, self.bird.y))
+
+        for entity in self.entities:
+            entity.draw(self.entities, self.game)
+
+        if self.bg_i == -const.WIDTH:
+            self.bg_i = 0
+            self.game.blit(self.background, (const.WIDTH + self.bg_i, 0))
+        self.bg_i -= 1
+
+    def do_event(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    self.bird.jump(self.bird.y + -25)
 
 
-game = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
-pygame.display.set_caption("Flappy Bird AI")
-clock = pygame.time.Clock()
-clock.tick(30)
+if __name__ == "__main__":
+    debug = bool(sys.argv[1]) if (len(sys.argv) > 1) else False
 
-background = pygame.image.load("../assets/bg.png")
-background = pygame.transform.scale(background, (const.WIDTH, const.HEIGHT))
-bird = Bird(50, 500, pygame.image.load("../assets/bird1.png"))
+    game_state = GameState(debug)
+    game_state.init_window()
 
-i = 0
-
-while True:
-    game.blit(background, (i, 0))
-    game.blit(background, (const.WIDTH + i, 0))
-    game.blit(bird.get_image(), (bird.x, bird.y))
-
-    for entity in entities:
-        entity.draw(game)
-
-    if i == -const.WIDTH:
-        i = 0
-        game.blit(background, (const.WIDTH + i, 0))
-    i -= 1
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            exit()
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_SPACE:
-                bird.jump(bird.y + -25)
-    pygame.display.update()
+    while True:
+        game_state.do_update()
+        game_state.do_draw()
+        game_state.do_event()
+        pygame.display.update()
