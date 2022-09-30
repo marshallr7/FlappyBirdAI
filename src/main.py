@@ -35,6 +35,9 @@ class Bird(DrawableEntity):
     def jump(self, y):
         self.y = y
 
+    def draw(self, game_state, surface: pygame.Surface):
+        surface.blit(img_bird, (self.x, self.y))
+
 
 class Rectangle(DrawableEntity):
     """
@@ -216,10 +219,11 @@ class GameState:
         """
         self.game.blit(self.background, (self.bg_i, 0))
         self.game.blit(self.background, (const.WIDTH + self.bg_i, 0))
-        self.game.blit(img_bird, (self.bird.x, self.bird.y))
 
         for entity in self.entities:
             entity.draw(self, self.game)
+
+        self.bird.draw(self, self.game)
 
         if self.bg_i == -const.WIDTH:
             self.bg_i = 0
