@@ -120,6 +120,9 @@ class Pipe(Rectangle):
         else:
             self.img = img_pipe_bot
 
+    def update(self, game_state):
+        self.x -= game_state.pipe_speed
+
     def draw(self, game_state, surface: pygame.Surface):
         surface.blit(self.img, [self.x, self.y])
 
@@ -225,6 +228,8 @@ class GameState:
     background: pygame.Surface
     bg_i: int
 
+    pipe_speed: int
+
     def __init__(self, debug: bool):
         self.bird = Bird(50, 500)
 
@@ -240,6 +245,8 @@ class GameState:
         self.background = img_background
         self.bg_i = 0
 
+        self.pipe_speed = const.INIT_SPEED
+
     def init_window(self):
         self.game = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
         self.bg_i = 0
@@ -253,13 +260,27 @@ class GameState:
         Update entities before drawing them.
         :return: None
         """
+        self.pipe_speed += const.GAIN_SPEED
+
         if self.bg_i == -const.WIDTH:
             self.bg_i = 0
             self.game.blit(self.background, (const.WIDTH + self.bg_i, 0))
         self.bg_i -= 1
 
+        # Bad workaround, we remove pipes one at a time but add them two at a time
+        spawn_pipes = False
         for entity in self.entities:
             entity.update(self)
+            # Respawn pipes if needed
+            # FUTURE: Handle pipes better, just move them to the right
+            if isinstance(entity, Pipe):
+                if entity.x < const.PIPE_TRASH:
+                    # Self modification issues?
+                    self.entities.remove(entity)
+                    spawn_pipes = True
+
+        if spawn_pipes:
+            add_pipe_pair(self.entities, 100, 50, 400)
 
         self.bird.update(self)
 
