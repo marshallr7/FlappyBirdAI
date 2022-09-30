@@ -219,8 +219,15 @@ class GameState:
         Update entities before drawing them.
         :return: None
         """
+        if self.bg_i == -const.WIDTH:
+            self.bg_i = 0
+            self.game.blit(self.background, (const.WIDTH + self.bg_i, 0))
+        self.bg_i -= 1
+
         for entity in self.entities:
             entity.update(self)
+
+        self.bird.update(self)
 
     def do_draw(self):
         """
@@ -234,11 +241,6 @@ class GameState:
             entity.draw(self, self.game)
 
         self.bird.draw(self, self.game)
-
-        if self.bg_i == -const.WIDTH:
-            self.bg_i = 0
-            self.game.blit(self.background, (const.WIDTH + self.bg_i, 0))
-        self.bg_i -= 1
 
     def do_event(self):
         for event in pygame.event.get():
