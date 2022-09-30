@@ -4,6 +4,10 @@ import pygame
 import const
 
 
+img_pipe_bot = pygame.image.load("../assets/pipe.png")
+img_pipe_top = pygame.transform.flip(img_pipe_bot, False, True)
+
+
 class DrawableEntity:
     # Absolute positions can change based on the object
     # Circle position is center, rectangle is top left, etc
@@ -55,6 +59,24 @@ class Rectangle(DrawableEntity):
 
     def draw(self, surface: pygame.Surface):
         pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.x, self.y, self.size_x, self.size_y))
+
+
+class Pipe(Rectangle):
+    """
+    A single pipe in the game.
+    The x/y position is the top left point of the pipe sprite
+    """
+    img: pygame.Surface
+
+    def __init__(self, x, y, top):
+        super().__init__(x, y, const.PIPE_X, const.PIPE_Y)
+        if top:
+            self.img = img_pipe_top
+        else:
+            self.img = img_pipe_bot
+
+    def draw(self, surface: pygame.Surface):
+        surface.blit(self.img, [self.x, self.y])
 
 
 class MouseLine(DrawableEntity):
@@ -141,13 +163,16 @@ class MouseLine(DrawableEntity):
         pygame.draw.line(surface, (255, 0, 255), [self.x, self.y], self.point)
 
 
+def add_pipe_pair(entity_list, x, y, gap):
+    entity_list.append(Pipe(x, y - const.PIPE_Y, True))
+    entity_list.append(Pipe(x, y + gap, False))
+
 entities = list()
-# top rect
-entities.append(Rectangle(100, 100, 200, 100))
-# middle rect
-entities.append(Rectangle(300, 200, 50, 200))
-# bottom rect
-entities.append(Rectangle(500, 100, 20, 20))
+# Pipes
+add_pipe_pair(entities, 100, 50, 200)
+add_pipe_pair(entities, 200, 100, 150)
+add_pipe_pair(entities, 300, 150, 100)
+add_pipe_pair(entities, 400, 200, 50)
 entities.append(MouseLine())
 
 
