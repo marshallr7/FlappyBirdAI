@@ -110,19 +110,6 @@ class MouseLine(DrawableEntity):
             p = [rectangle.tl_x + rectangle.size_x, self.y]
 
         return math.dist([self.x, self.y], p), p
-        # dist_left = abs(left - self.x)
-        # dist_right = abs(right - self.x)
-        # dist_x = left if dist_left < dist_right else right
-        #
-        # dist_top = abs(top - self.y)
-        # dist_bot = abs(bot - self.y)
-        # dist_y = top if dist_top < dist_bot else bot
-        #
-        # dist_corner_x = dist_x - self.x
-        # dist_corner_y = dist_y - self.y
-        # dist_corner = math.sqrt((dist_corner_x * dist_corner_x) + (dist_corner_y * dist_corner_y))
-        #
-        # return min(dist_left, dist_right, dist_top, dist_bot, dist_corner)
 
     def draw(self, surface: pygame.Surface):
         # Compare distance to the mouse position
@@ -134,14 +121,11 @@ class MouseLine(DrawableEntity):
         self.dist = 10000000.0
         for e in entities:
             if isinstance(e, Rectangle):
-                # dist = math.dist(mouse_pos, e.get_center_pos())
                 dist_tuple = self.dist_to_rect_side(e)
                 if dist_tuple[0] < self.dist:
                     self.dist = dist_tuple[0]
                     self.point = dist_tuple[1]
 
-        # Draw
-        #pygame.draw.circle(surface, (100, 100, 100), [self.x, self.y], self.dist)
         pygame.draw.line(surface, (255, 0, 255), [self.x, self.y], self.point)
 
 
