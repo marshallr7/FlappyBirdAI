@@ -22,7 +22,7 @@ class DrawableEntity:
         self.x = x
         self.y = y
     
-    def draw(self, entities, surface: pygame.Surface):
+    def draw(self, game_state, surface: pygame.Surface):
         # Error, this should be implemented
         # No abstract classes in plain python?
         assert False
@@ -57,7 +57,7 @@ class Rectangle(DrawableEntity):
         """
         return [self.x + (self.size_x / 2), self.y + (self.size_y / 2)]
 
-    def draw(self, entities: list[DrawableEntity], surface: pygame.Surface):
+    def draw(self, game_state, surface: pygame.Surface):
         pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.x, self.y, self.size_x, self.size_y))
 
 
@@ -75,7 +75,7 @@ class Pipe(Rectangle):
         else:
             self.img = img_pipe_bot
 
-    def draw(self, entities: list[DrawableEntity], surface: pygame.Surface):
+    def draw(self, game_state, surface: pygame.Surface):
         surface.blit(self.img, [self.x, self.y])
 
 
@@ -145,7 +145,7 @@ class MouseLine(DrawableEntity):
 
         return math.dist([self.x, self.y], p), p
 
-    def draw(self, entities: list[DrawableEntity], surface: pygame.Surface):
+    def draw(self, game_state, surface: pygame.Surface):
         # Compare distance to the mouse position
         mouse_pos = pygame.mouse.get_pos()
         self.x = mouse_pos[0]
@@ -219,7 +219,7 @@ class GameState:
         self.game.blit(img_bird, (self.bird.x, self.bird.y))
 
         for entity in self.entities:
-            entity.draw(self.entities, self.game)
+            entity.draw(self, self.game)
 
         if self.bg_i == -const.WIDTH:
             self.bg_i = 0
