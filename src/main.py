@@ -33,6 +33,10 @@ class Bird(DrawableEntity):
 
 
 class Rectangle(DrawableEntity):
+    """
+    A solid color rectangle.
+    The x/y position is the top left of the rectangle
+    """
     size_x: int
     size_y: int
 
