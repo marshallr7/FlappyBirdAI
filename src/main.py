@@ -137,7 +137,7 @@ class Pipe(Rectangle):
         surface.blit(self.img, [self.x, self.y])
 
 
-class MouseLine(DrawableEntity):
+class DistanceLine(DrawableEntity):
     # The distance to the closest point
     dist: float
     # The point we are closest to
@@ -203,12 +203,7 @@ class MouseLine(DrawableEntity):
 
         return math.dist([self.x, self.y], p), p
 
-    def update(self, game_state):
-        # Compare distance to the mouse position
-        mouse_pos = pygame.mouse.get_pos()
-        self.x = mouse_pos[0]
-        self.y = mouse_pos[1]
-
+    def set_closest_point(self, game_state):
         # Check distances to all rectangles and find the closest
         self.dist = 10000000.0
         for e in game_state.entities:
@@ -220,6 +215,25 @@ class MouseLine(DrawableEntity):
 
     def draw(self, game_state, surface: pygame.Surface):
         pygame.draw.line(surface, (255, 0, 255), [self.x, self.y], self.point)
+
+
+class MouseLine(DistanceLine):
+    def update(self, game_state):
+        # Compare distance to the mouse position
+        mouse_pos = pygame.mouse.get_pos()
+        self.x = mouse_pos[0]
+        self.y = mouse_pos[1]
+
+        self.set_closest_point(game_state)
+
+
+class BirdLine(DistanceLine):
+    def update(self, game_state):
+        bird_pos = [game_state.bird.x + const.BIRD_X / 2, game_state.bird.y + const.BIRD_Y / 2]
+        self.x = bird_pos[0]
+        self.y = bird_pos[1]
+
+        self.set_closest_point(game_state)
 
 
 def add_pipe_pair(entity_list, x, y, gap):
@@ -251,6 +265,7 @@ class GameState:
 
         if debug:
             self.entities.append(MouseLine())
+            self.entities.append(BirdLine())
 
         self.background = img_background
         self.bg_i = 0

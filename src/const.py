@@ -4,6 +4,9 @@ HEIGHT = 800
 # Size of pipe image
 PIPE_X = 52
 PIPE_Y = 320
+# Size of the bird image
+BIRD_X = 32
+BIRD_Y = 24
 # Pipe Speed/Increase
 INIT_SPEED = 1
 GAIN_SPEED = 0.0001
