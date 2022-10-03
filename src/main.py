@@ -1,6 +1,7 @@
 import math
-
 import pygame
+import random
+
 import const
 
 
@@ -15,6 +16,45 @@ class Bird:
 
     def get_image(self):
         return self.image
+
+
+class Pipe:
+    # Gap between top and bottom pipe
+    GAP = 100
+    # Speed of pipe
+    SPEED = 50
+
+    def __init__(self, height, image, location):
+        self.height = height  # Height of pipe
+        self.image = image  # Pipe image
+        self.top = 0   # Top of pipe
+        self.bottom = 0  # Bottom of pipe
+        self.location = location  # Pipe x location
+        self.top_pipe = pygame.transform.flip(image, False, True)  # Top pipe image
+        self.bottom_pipe = image  # Bottom pipe image
+
+        self.generate_height()
+
+    def generate_height(self):
+        t = random.randint(50, 450)
+        self.top = t - self.top_pipe.get_height()
+        self.bottom = self.top + self.GAP
+
+    def move(self):
+        self.location -= self.SPEED
+
+    def collide(self):
+        # Not sure how we want to implement this yet
+        assert False
+
+    def draw(self, game_window):
+        game_window.blit(self.top_pipe, (self.location, self.top))
+        game_window.blit(self.bottom_pipe, (self.location, self.bottom))
+
+    def get_passed(self):
+        # Check our birds leftmost pixel against the right most of the pipe
+        # Not sure if this is the best way to handle this so leaving it blank for now
+        assert False
 
 
 class DrawableEntity:
@@ -138,7 +178,6 @@ entities.append(Rectangle(300, 200, 50, 200))
 entities.append(Rectangle(500, 100, 20, 20))
 entities.append(MouseLine())
 
-
 game = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
 pygame.display.set_caption("Flappy Bird AI")
 clock = pygame.time.Clock()
@@ -147,6 +186,7 @@ clock.tick(30)
 background = pygame.image.load("../assets/bg.png")
 background = pygame.transform.scale(background, (const.WIDTH, const.HEIGHT))
 bird = Bird(50, 500, pygame.image.load("../assets/bird1.png"))
+pipe = pygame.image.load("../assets/pipe.png")
 
 i = 0
 
