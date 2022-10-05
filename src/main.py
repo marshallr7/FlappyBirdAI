@@ -258,6 +258,9 @@ class GameState:
     pipe_speed: int
 
     def __init__(self, debug: bool):
+        self.delta = 0
+        self.state_frame = 0
+
         self.bird = Bird(50, 500)
 
         self.entities = list()
@@ -288,6 +291,7 @@ class GameState:
         Update entities before drawing them.
         :return: None
         """
+        self.state_frame = self.state_frame + 1
         self.pipe_speed += const.GAIN_SPEED
 
         if self.bg_i == -const.WIDTH:
@@ -335,6 +339,10 @@ if __name__ == "__main__":
     last_frame = time.time()
 
     while True:
+        # Prevent de-sync
+        if game_state.state_frame != real_frame:
+            assert False
+
         real_frame = real_frame + 1
         # Limit the frame rate
         clock.tick(const.FPS)
