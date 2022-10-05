@@ -50,7 +50,7 @@ class Bird(DrawableEntity):
         self.velocity = 0
 
     def jump(self):
-        self.velocity += const.JUMP_VELOCITY
+        self.velocity = const.JUMP_VELOCITY
 
     def update(self, game_state):
         # Position Check
@@ -66,7 +66,7 @@ class Bird(DrawableEntity):
             return
 
         # Gravity update
-        self.velocity += const.GRAVITY
+        self.velocity += const.GRAVITY * game_state.delta
 
         # Bounds check
         if self.velocity > const.MAX_VELOCITY:
@@ -75,7 +75,7 @@ class Bird(DrawableEntity):
             self.velocity = const.MIN_VELOCITY
 
         # Update Position
-        self.y += self.velocity
+        self.y += self.velocity * game_state.delta
 
     def draw(self, game_state, surface: pygame.Surface):
         surface.blit(img_bird, (self.x, self.y))
@@ -123,7 +123,7 @@ class Pipe(Rectangle):
             self.img = img_pipe_bot
 
     def update(self, game_state):
-        self.x -= game_state.pipe_speed
+        self.x -= game_state.pipe_speed * game_state.delta
         # Relocate if needed
         if self.x < const.PIPE_TRASH:
             self.x = const.PIPE_SPAWN
@@ -292,7 +292,7 @@ class GameState:
         :return: None
         """
         self.state_frame = self.state_frame + 1
-        self.pipe_speed += const.GAIN_SPEED
+        self.pipe_speed += const.GAIN_SPEED * game_state.delta
 
         if self.bg_i == -const.WIDTH:
             self.bg_i = 0
