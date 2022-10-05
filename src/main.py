@@ -1,6 +1,7 @@
 import math
 import random
 import sys
+import time
 
 import pygame
 import const
@@ -75,8 +76,6 @@ class Bird(DrawableEntity):
 
         # Update Position
         self.y += self.velocity
-
-        print(self.velocity)
 
     def draw(self, game_state, surface: pygame.Surface):
         surface.blit(img_bird, (self.x, self.y))
@@ -246,6 +245,10 @@ class GameState:
     An organized structure of all entities in the game
     """
     game: pygame.Surface
+    # Time change since the last frame was rendered
+    delta: float
+    # The frame of this game state
+    state_frame: int
 
     bird: Bird
     entities: list[DrawableEntity]
@@ -325,7 +328,25 @@ if __name__ == "__main__":
     game_state = GameState(debug)
     game_state.init_window()
 
+    clock = pygame.time.Clock()
+    # The current rendered frame, tracked separately from game state
+    real_frame = 0
+    # The last time a frame was rendered, used to calculate frame time
+    last_frame = time.time()
+
     while True:
+        real_frame = real_frame + 1
+        # Limit the frame rate
+        clock.tick(const.FPS)
+
+        # Calculate the time since the last frame
+        # pygame.clock.get_fps() averages the last 10 frames
+        # pygame.clock.get_time() returns an int in ms, no decimal. 16 instead if 16.6777
+        next_frame = time.time()
+        game_state.delta = next_frame - last_frame
+        last_frame = next_frame
+
+        # Perform per-frame game operations
         game_state.do_update()
         game_state.do_draw()
         game_state.do_event()
