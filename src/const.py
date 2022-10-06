@@ -2,7 +2,7 @@
 FPS = 60
 # Window Properties
 WIDTH = 600
-HEIGHT = 800
+HEIGHT = 500
 # Size of pipe image
 PIPE_X = 52
 PIPE_Y = 320
@@ -13,18 +13,18 @@ BIRD_Y = 24
 INIT_SPEED = 100
 GAIN_SPEED = 1
 # Pipe gap Min/Max distance from screen bounds
-PIPE_TOP = 100
-PIPE_BOT = 150
+PIPE_TOP = 25
+PIPE_BOT = 75
 # Size Bounds for pipe gap size
-GAP_MIN = 200
-GAP_MAX = 400
+GAP_MIN = 125
+GAP_MAX = 250
 # Where pipes are relocated to
 PIPE_SPAWN = WIDTH
 # Where pipes must be moved from
 PIPE_TRASH = -1 * PIPE_X
 # Bird Bounds
-BIRD_MIN_Y = 50
-BIRD_MAX_Y = 705
+BIRD_MIN_Y = 25
+BIRD_MAX_Y = HEIGHT - 75
 # Bird Physics
 # Remember that y=0 is the top of the screen
 GRAVITY = 800
