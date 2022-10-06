@@ -12,6 +12,7 @@ img_pipe_top = pygame.transform.flip(img_pipe_bot, False, True)
 img_bird = pygame.image.load("../assets/bird1.png")
 img_background = pygame.image.load("../assets/bg.png")
 img_background = pygame.transform.scale(img_background, (const.WIDTH, const.HEIGHT))
+img_base = pygame.image.load("../assets/base.png")
 
 
 class DrawableEntity:
@@ -186,6 +187,42 @@ class PipePair(DrawableEntity):
         self.bot_pipe.x = self.x
 
 
+class FloorTile(Rectangle):
+    """
+    A single floor tile which is repeated across the bottom of the screen.
+    This is updated by the Floor class.
+    """
+
+    def __init__(self, x: int):
+        super().__init__(x, const.FLOOR_Y, const.BASE_X, const.BASE_Y)
+
+    def draw(self, game_state, surface: pygame.Surface):
+        surface.blit(img_base, [self.x, self.y])
+
+
+class Floor(DrawableEntity):
+    """
+    A collection of floor sprites which scroll by.
+    Like the pipe pair class, this will only update the x positions of the sprites
+    """
+    tiles: list[FloorTile]
+
+    def __init__(self):
+        super().__init__(0, 0)
+        self.tiles = list()
+
+        num_tiles = math.ceil((const.WIDTH + const.BASE_X) / const.BASE_X)
+        for i in range(num_tiles):
+            self.tiles.append(FloorTile(i * const.BASE_X))
+
+    def update(self, game_state):
+        for tile in self.tiles:
+            tile.x -= game_state.pipe_speed * game_state.delta
+            # If the tile is off the screen then move it back to the right
+            if const.BASE_X + tile.x < 0:
+                tile.x += const.BASE_X * len(self.tiles)
+
+
 class DistanceLine(DrawableEntity):
     # The distance to the closest point
     dist: float
@@ -305,6 +342,7 @@ class GameState:
     bird: Bird
     entities: list[DrawableEntity]
     pipes: list[PipePair]
+    floor: Floor
     background: pygame.Surface
     bg_i: int
 
@@ -322,6 +360,10 @@ class GameState:
         add_pipe_pair(self.entities, self.pipes, (const.PIPE_TRASH + const.WIDTH))
         add_pipe_pair(self.entities, self.pipes, (const.PIPE_TRASH + const.WIDTH) * 1.4)
         add_pipe_pair(self.entities, self.pipes, (const.PIPE_TRASH + const.WIDTH) * 1.8)
+        # Add the Floor
+        self.floor = Floor()
+        for tile in self.floor.tiles:
+            self.entities.append(tile)
 
         if debug:
             self.entities.append(MouseLine())
@@ -352,6 +394,8 @@ class GameState:
             self.bg_i = 0
             self.game.blit(self.background, (const.WIDTH + self.bg_i, 0))
         self.bg_i -= 1
+
+        self.floor.update(self)
 
         for pipe_pair in self.pipes:
             pipe_pair.update(self)
