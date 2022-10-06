@@ -45,10 +45,16 @@ class Bird(DrawableEntity):
     """
     # The y velocity of the bird
     velocity: float
+    # True when the bird has died
+    dead: bool
+    # Distance to closest threat
+    threat: float
 
     def __init__(self, x, y):
         super().__init__(x, y)
         self.velocity = 0
+        self.dead = False
+        self.threat = 0
 
     def jump(self):
         self.velocity = const.JUMP_VELOCITY
@@ -322,6 +328,24 @@ class BirdLine(DistanceLine):
         self.set_closest_point(game_state)
 
 
+class BirdDistanceCheck(DistanceLine):
+    """
+    Entity which sets the distance of the bird from the closest object.
+    Also handles bird death.
+    """
+    def update(self, game_state):
+        bird_pos = [game_state.bird.x + const.BIRD_X / 2, game_state.bird.y + const.BIRD_Y / 2]
+        self.x = bird_pos[0]
+        self.y = bird_pos[1]
+
+        self.set_closest_point(game_state)
+
+        if self.dist < const.BIRD_DEATH:
+            game_state.bird.dead = True
+        else:
+            game_state.bird.threat = self.dist
+
+
 def add_pipe_pair(entity_list, pipe_list, x):
     new_pair = PipePair(x)
     entity_list.append(new_pair.top_pipe)
@@ -356,14 +380,19 @@ class GameState:
 
         self.entities = list()
         self.pipes = list()
+
         # Spawn pipes with their set distances, need to include trash distance for consistency
         add_pipe_pair(self.entities, self.pipes, (const.PIPE_TRASH + const.WIDTH))
         add_pipe_pair(self.entities, self.pipes, (const.PIPE_TRASH + const.WIDTH) * 1.4)
         add_pipe_pair(self.entities, self.pipes, (const.PIPE_TRASH + const.WIDTH) * 1.8)
+
         # Add the Floor
         self.floor = Floor()
         for tile in self.floor.tiles:
             self.entities.append(tile)
+
+        # Add the bird distance updater
+        self.entities.append(BirdDistanceCheck())
 
         if debug:
             self.entities.append(MouseLine())

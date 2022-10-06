@@ -13,6 +13,8 @@ PIPE_Y = 320
 # Size of the bird image
 BIRD_X = 32
 BIRD_Y = 24
+# The distance from an object in which the bird dies
+BIRD_DEATH = BIRD_Y / 2
 # Pipe Speed/Increase
 INIT_SPEED = 100
 GAIN_SPEED = 1
