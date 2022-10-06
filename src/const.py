@@ -4,6 +4,9 @@ FPS = 60
 WIDTH = 600
 HEIGHT = 500
 FLOOR_Y = HEIGHT - 50
+# Size of the numbers
+NUM_X = 24
+NUM_Y = 36
 # Size of floor image
 BASE_X = 336
 BASE_Y = 112

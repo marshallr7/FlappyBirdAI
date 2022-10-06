@@ -14,6 +14,17 @@ img_background = pygame.image.load("../assets/bg.png")
 img_background = pygame.transform.scale(img_background, (const.WIDTH, const.HEIGHT))
 img_base = pygame.image.load("../assets/base.png")
 
+img_num_0 = pygame.image.load("../assets/numbers/0.png")
+img_num_1 = pygame.image.load("../assets/numbers/1.png")
+img_num_2 = pygame.image.load("../assets/numbers/2.png")
+img_num_3 = pygame.image.load("../assets/numbers/3.png")
+img_num_4 = pygame.image.load("../assets/numbers/4.png")
+img_num_5 = pygame.image.load("../assets/numbers/5.png")
+img_num_6 = pygame.image.load("../assets/numbers/6.png")
+img_num_7 = pygame.image.load("../assets/numbers/7.png")
+img_num_8 = pygame.image.load("../assets/numbers/8.png")
+img_num_9 = pygame.image.load("../assets/numbers/9.png")
+
 
 class DrawableEntity:
     # Absolute positions can change based on the object
@@ -145,6 +156,7 @@ class PipePair(DrawableEntity):
     bot_pipe: Pipe
     # The X position of the pipes, their position is set to this
     x: int
+    # If the bird has passed this set of pipes
 
     def __init__(self, x: int):
         """
@@ -156,6 +168,7 @@ class PipePair(DrawableEntity):
         self.top_pipe = Pipe(x, 0, True)
         self.bot_pipe = Pipe(x, 0, False)
         self.change_gap()
+        self.passed = False
 
     def change_gap(self):
         """
@@ -184,10 +197,17 @@ class PipePair(DrawableEntity):
         """
         self.x -= game_state.pipe_speed * game_state.delta
 
+        # Pipes have passed the bird, increment the pipe counter
+        if self.x + const.PIPE_X < game_state.bird.x and not self.passed:
+            self.passed = True
+            game_state.pipes_passed += 1
+
         # Pipes moved off-screen, change the gap and move them to the right
         if self.x < const.PIPE_TRASH:
             self.x = const.PIPE_SPAWN
             self.change_gap()
+            # We're in front of the bird now
+            self.passed = False
 
         self.top_pipe.x = self.x
         self.bot_pipe.x = self.x
@@ -346,6 +366,48 @@ class BirdDistanceCheck(DistanceLine):
             game_state.bird.threat = self.dist
 
 
+class PipePassCounter(DrawableEntity):
+    """
+    Show the number of pipes passed on the screen
+    """
+    def __init__(self, x, y):
+        super().__init__(x, y)
+
+    def draw(self, game_state, surface: pygame.Surface):
+        """
+        Draw the pipes passed to the screen
+
+        :param game_state: the current game state to update from
+        :param surface: the surface to draw to
+        :return: None
+        """
+        passed_str = str(game_state.pipes_passed)
+        for index in range(len(passed_str)):
+            num = int(passed_str[index])
+            pos = [self.x + (index * const.NUM_X), self.y]
+
+            if num == 0:
+                surface.blit(img_num_0, pos)
+            elif num == 1:
+                surface.blit(img_num_1, pos)
+            elif num == 2:
+                surface.blit(img_num_2, pos)
+            elif num == 3:
+                surface.blit(img_num_3, pos)
+            elif num == 4:
+                surface.blit(img_num_4, pos)
+            elif num == 5:
+                surface.blit(img_num_5, pos)
+            elif num == 6:
+                surface.blit(img_num_6, pos)
+            elif num == 7:
+                surface.blit(img_num_7, pos)
+            elif num == 8:
+                surface.blit(img_num_8, pos)
+            elif num == 9:
+                surface.blit(img_num_9, pos)
+
+
 def add_pipe_pair(entity_list, pipe_list, x):
     new_pair = PipePair(x)
     entity_list.append(new_pair.top_pipe)
@@ -364,6 +426,7 @@ class GameState:
     state_frame: int
 
     bird: Bird
+    pipes_passed: int
     entities: list[DrawableEntity]
     pipes: list[PipePair]
     floor: Floor
@@ -377,6 +440,7 @@ class GameState:
         self.state_frame = 0
 
         self.bird = Bird(50, const.HEIGHT / 2)
+        self.pipes_passed = 0
 
         self.entities = list()
         self.pipes = list()
@@ -393,6 +457,8 @@ class GameState:
 
         # Add the bird distance updater
         self.entities.append(BirdDistanceCheck())
+        # add the pipe counter
+        self.entities.append(PipePassCounter(50, 50))
 
         if debug:
             self.entities.append(MouseLine())
