@@ -314,7 +314,7 @@ class GameState:
         self.delta = 0
         self.state_frame = 0
 
-        self.bird = Bird(50, 500)
+        self.bird = Bird(50, const.HEIGHT / 2)
 
         self.entities = list()
         self.pipes = list()
