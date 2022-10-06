@@ -13,8 +13,11 @@ BIRD_Y = 24
 INIT_SPEED = 100
 GAIN_SPEED = 1
 # Pipe gap Min/Max distance from screen bounds
-PIPE_MIN = 200
-PIPE_MAX = 320
+PIPE_TOP = 100
+PIPE_BOT = 150
+# Size Bounds for pipe gap size
+GAP_MIN = 200
+GAP_MAX = 400
 # Where pipes are relocated to
 PIPE_SPAWN = WIDTH
 # Where pipes must be moved from

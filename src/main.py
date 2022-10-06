@@ -122,18 +122,68 @@ class Pipe(Rectangle):
         else:
             self.img = img_pipe_bot
 
-    def update(self, game_state):
-        self.x -= game_state.pipe_speed * game_state.delta
-        # Relocate if needed
-        if self.x < const.PIPE_TRASH:
-            self.x = const.PIPE_SPAWN
-            if self.top:
-                self.y = random.randrange(const.PIPE_MIN, const.PIPE_MAX) - const.PIPE_Y
-            else:
-                self.y = const.HEIGHT - random.randrange(const.PIPE_MIN, const.PIPE_MAX)
-
     def draw(self, game_state, surface: pygame.Surface):
         surface.blit(self.img, [self.x, self.y])
+
+
+class PipePair(DrawableEntity):
+    """
+    A Pair of Pipes in the game.
+    Both need to be tracked so that it is known when the bird passes one pair of pipes.
+    Also removes a check to move a pipe, since only this object needs to be updated.
+    We can get more control over the size and location by knowing where the pipes are.
+    """
+    # Top and Bottom pipe
+    top_pipe: Pipe
+    bot_pipe: Pipe
+    # The X position of the pipes, their position is set to this
+    x: int
+
+    def __init__(self, x: int):
+        """
+        Initialize a pipe pair at the provided x coordinate
+        :param x: the x coordinate to place the pipes at
+        """
+        super().__init__(x, 0)
+        self.x = x
+        self.top_pipe = Pipe(x, 0, True)
+        self.bot_pipe = Pipe(x, 0, False)
+        self.change_gap()
+
+    def change_gap(self):
+        """
+        Change the y positions of the pipes to move where the gap is.
+        Called on init and when the pipes move past the bird off-screen
+        :return: None
+        """
+        # Calculate the gap size
+        gap = random.randrange(const.GAP_MIN, const.GAP_MAX)
+        # The lowest point the top of the gap can be at to not be too low
+        lowest = const.HEIGHT - const.PIPE_BOT - gap
+        # Where the top pipe will reach to
+        pipe_loc = random.randrange(const.PIPE_TOP, lowest)
+
+        # Move pipes
+        self.top_pipe.y = pipe_loc - const.PIPE_Y
+        self.bot_pipe.y = pipe_loc + gap
+
+    def update(self, game_state):
+        """
+        Update the positions of the pipes for them.
+        We don't want to handle varying state of if this or the pipes update before/after each other.
+
+        :param game_state: the current state of the game we update from
+        :return: None
+        """
+        self.x -= game_state.pipe_speed * game_state.delta
+
+        # Pipes moved off-screen, change the gap and move them to the right
+        if self.x < const.PIPE_TRASH:
+            self.x = const.PIPE_SPAWN
+            self.change_gap()
+
+        self.top_pipe.x = self.x
+        self.bot_pipe.x = self.x
 
 
 class DistanceLine(DrawableEntity):
@@ -235,9 +285,11 @@ class BirdLine(DistanceLine):
         self.set_closest_point(game_state)
 
 
-def add_pipe_pair(entity_list, x, y, gap):
-    entity_list.append(Pipe(x, y - const.PIPE_Y, True))
-    entity_list.append(Pipe(x, y + gap, False))
+def add_pipe_pair(entity_list, pipe_list, x):
+    new_pair = PipePair(x)
+    entity_list.append(new_pair.top_pipe)
+    entity_list.append(new_pair.bot_pipe)
+    pipe_list.append(new_pair)
 
 
 class GameState:
@@ -252,6 +304,7 @@ class GameState:
 
     bird: Bird
     entities: list[DrawableEntity]
+    pipes: list[PipePair]
     background: pygame.Surface
     bg_i: int
 
@@ -264,10 +317,11 @@ class GameState:
         self.bird = Bird(50, 500)
 
         self.entities = list()
+        self.pipes = list()
         # Spawn pipes with their set distances, need to include trash distance for consistency
-        add_pipe_pair(self.entities, (const.PIPE_TRASH + const.WIDTH), 200, 400)
-        add_pipe_pair(self.entities, (const.PIPE_TRASH + const.WIDTH) * 1.4, 250, 300)
-        add_pipe_pair(self.entities, (const.PIPE_TRASH + const.WIDTH) * 1.8, 300, 200)
+        add_pipe_pair(self.entities, self.pipes, (const.PIPE_TRASH + const.WIDTH))
+        add_pipe_pair(self.entities, self.pipes, (const.PIPE_TRASH + const.WIDTH) * 1.4)
+        add_pipe_pair(self.entities, self.pipes, (const.PIPE_TRASH + const.WIDTH) * 1.8)
 
         if debug:
             self.entities.append(MouseLine())
@@ -298,6 +352,9 @@ class GameState:
             self.bg_i = 0
             self.game.blit(self.background, (const.WIDTH + self.bg_i, 0))
         self.bg_i -= 1
+
+        for pipe_pair in self.pipes:
+            pipe_pair.update(self)
 
         for entity in self.entities:
             entity.update(self)
