@@ -3,6 +3,7 @@ import random
 import sys
 import time
 
+import neat
 import pygame
 import const
 
@@ -24,6 +25,75 @@ img_num_6 = pygame.image.load("../assets/numbers/6.png")
 img_num_7 = pygame.image.load("../assets/numbers/7.png")
 img_num_8 = pygame.image.load("../assets/numbers/8.png")
 img_num_9 = pygame.image.load("../assets/numbers/9.png")
+
+
+def dist_to_rect_side(rectangle_1, rectangle_2) -> tuple[float, list[float]]:
+    """
+    Calculates the distance to the closest point of a rectangle
+    :param rectangle_2: the rectangle to check
+    :return: a tuple of the distance and closest point
+    """
+    # 8 states for the 8 areas created by dividing the coordinate space
+    # along the sides of the rectangle (as if they were infinite)
+    # Excluding inside the rectangle
+    #     LEFT    RIGHT
+    #     11 # 22 # 33
+    #     11 # 22 # 33
+    #     ## # ## # ## TOP
+    #     44 # XX # 55
+    #     44 # XX # 55
+    #     ## # ## # ## BOT
+    #     66 # 77 # 88
+    #     66 # 77 # 88
+
+    # Rectangle sides as 1D planes
+    left = rectangle_2.x
+    right = rectangle_2.x + rectangle_2.size_x
+    top = rectangle_2.y
+    bot = rectangle_2.y + rectangle_2.size_y
+
+    # The point to check distance to
+    p: list[float]
+    # State 1
+    if rectangle_1.x < left and rectangle_1.y < top:
+        p = [rectangle_2.x, rectangle_2.y]
+    # State 3
+    elif rectangle_1.x > right and rectangle_1.y < top:
+        p = [rectangle_2.x + rectangle_2.size_x, rectangle_2.y]
+    # State 6
+    elif rectangle_1.x < left and rectangle_1.y > bot:
+        p = [rectangle_2.x, rectangle_2.y + rectangle_2.size_y]
+    # State 8
+    elif rectangle_1.x > right and rectangle_1.y > bot:
+        p = [rectangle_2.x + rectangle_2.size_x, rectangle_2.y + rectangle_2.size_y]
+    # State 2
+    elif rectangle_1.y < top:
+        p = [rectangle_1.x, rectangle_2.y]
+    # State 7
+    elif rectangle_1.y > bot:
+        p = [rectangle_1.x, rectangle_2.y + rectangle_2.size_y]
+    # State 4
+    elif rectangle_1.x < left:
+        p = [rectangle_2.x, rectangle_1.y]
+    # State 5
+    else:
+        p = [rectangle_2.x + rectangle_2.size_x, rectangle_1.y]
+
+    return math.dist([rectangle_1.x, rectangle_1.y], p), p
+
+
+def get_closest_point(rectangle, game_state):
+    # Check distances to all rectangles and find the closest
+    dist = 10000000.0
+    point = list[int]
+    for e in game_state.entities:
+        if isinstance(e, Rectangle):
+            dist_tuple = dist_to_rect_side(rectangle, e)
+            if dist_tuple[0] < dist:
+                dist = dist_tuple[0]
+                point = dist_tuple[1]
+
+    return dist, point
 
 
 class DrawableEntity:
@@ -60,17 +130,29 @@ class Bird(DrawableEntity):
     dead: bool
     # Distance to closest threat
     threat: float
+    # The fitness of this bird within a generation
+    fitness: float
 
     def __init__(self, x, y):
         super().__init__(x, y)
         self.velocity = 0
         self.dead = False
         self.threat = 0
+        self.fitness = 0
 
     def jump(self):
         self.velocity = const.JUMP_VELOCITY
 
     def update(self, game_state):
+        # Check if we're colliding
+        dist = get_closest_point(self, game_state)
+        if dist[0] < const.BIRD_DEATH:
+            self.dead = True
+        
+        # Dead :(
+        if self.dead:
+            pass
+        
         # Position Check
         # Move the bird to a safe area if needed
         if self.y < const.BIRD_MIN_Y:
@@ -197,10 +279,10 @@ class PipePair(DrawableEntity):
         """
         self.x -= game_state.pipe_speed * game_state.delta
 
-        # Pipes have passed the bird, increment the pipe counter
-        if self.x + const.PIPE_X < game_state.bird.x and not self.passed:
-            self.passed = True
-            game_state.pipes_passed += 1
+        # # Pipes have passed the bird, increment the pipe counter
+        # if self.x + const.PIPE_X < game_state.bird.x and not self.passed:
+        #     self.passed = True
+        #     game_state.pipes_passed += 1
 
         # Pipes moved off-screen, change the gap and move them to the right
         if self.x < const.PIPE_TRASH:
@@ -261,66 +343,12 @@ class DistanceLine(DrawableEntity):
         self.dist = 0
         self.point = [0, 0]
 
-    def dist_to_rect_side(self, rectangle: Rectangle) -> tuple[float, list[float]]:
-        """
-        Calculates the distance to the closest point of a rectangle
-        :param rectangle: the rectangle to check
-        :return: a tuple of the distance and closest point
-        """
-        # 8 states for the 8 areas created by dividing the coordinate space
-        # along the sides of the rectangle (as if they were infinite)
-        # Excluding inside the rectangle
-        #     LEFT    RIGHT
-        #     11 # 22 # 33
-        #     11 # 22 # 33
-        #     ## # ## # ## TOP
-        #     44 # XX # 55
-        #     44 # XX # 55
-        #     ## # ## # ## BOT
-        #     66 # 77 # 88
-        #     66 # 77 # 88
-
-        # Rectangle sides as 1D planes
-        left = rectangle.x
-        right = rectangle.x + rectangle.size_x
-        top = rectangle.y
-        bot = rectangle.y + rectangle.size_y
-
-        # The point to check distance to
-        p: list[float]
-        # State 1
-        if self.x < left and self.y < top:
-            p = [rectangle.x, rectangle.y]
-        # State 3
-        elif self.x > right and self.y < top:
-            p = [rectangle.x + rectangle.size_x, rectangle.y]
-        # State 6
-        elif self.x < left and self.y > bot:
-            p = [rectangle.x, rectangle.y + rectangle.size_y]
-        # State 8
-        elif self.x > right and self.y > bot:
-            p = [rectangle.x + rectangle.size_x, rectangle.y + rectangle.size_y]
-        # State 2
-        elif self.y < top:
-            p = [self.x, rectangle.y]
-        # State 7
-        elif self.y > bot:
-            p = [self.x, rectangle.y + rectangle.size_y]
-        # State 4
-        elif self.x < left:
-            p = [rectangle.x, self.y]
-        # State 5
-        else:
-            p = [rectangle.x + rectangle.size_x, self.y]
-
-        return math.dist([self.x, self.y], p), p
-
     def set_closest_point(self, game_state):
         # Check distances to all rectangles and find the closest
         self.dist = 10000000.0
         for e in game_state.entities:
             if isinstance(e, Rectangle):
-                dist_tuple = self.dist_to_rect_side(e)
+                dist_tuple = dist_to_rect_side(self, e)
                 if dist_tuple[0] < self.dist:
                     self.dist = dist_tuple[0]
                     self.point = dist_tuple[1]
@@ -425,7 +453,7 @@ class GameState:
     # The frame of this game state
     state_frame: int
 
-    bird: Bird
+    birds: list[Bird]
     pipes_passed: int
     entities: list[DrawableEntity]
     pipes: list[PipePair]
@@ -439,7 +467,7 @@ class GameState:
         self.delta = 0
         self.state_frame = 0
 
-        self.bird = Bird(50, const.HEIGHT / 2)
+        self.birds = list()
         self.pipes_passed = 0
 
         self.entities = list()
@@ -456,7 +484,7 @@ class GameState:
             self.entities.append(tile)
 
         # Add the bird distance updater
-        self.entities.append(BirdDistanceCheck())
+        # self.entities.append(BirdDistanceCheck())
         # add the pipe counter
         self.entities.append(PipePassCounter(50, 50))
 
@@ -483,7 +511,7 @@ class GameState:
         :return: None
         """
         self.state_frame = self.state_frame + 1
-        self.pipe_speed += const.GAIN_SPEED * game_state.delta
+        self.pipe_speed += const.GAIN_SPEED * self.delta
 
         if self.bg_i == -const.WIDTH:
             self.bg_i = 0
@@ -498,7 +526,8 @@ class GameState:
         for entity in self.entities:
             entity.update(self)
 
-        self.bird.update(self)
+        for bird in self.birds:
+            bird.update(self)
 
     def do_draw(self):
         """
@@ -511,22 +540,38 @@ class GameState:
         for entity in self.entities:
             entity.draw(self, self.game)
 
-        self.bird.draw(self, self.game)
+        for bird in self.birds:
+            bird.draw(self, self.game)
 
     def do_event(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_SPACE:
-                    self.bird.jump()
 
 
-if __name__ == "__main__":
-    debug = bool(sys.argv[1]) if (len(sys.argv) > 1) else False
+generation = 0
 
+
+def eval_genomes(genomes, config):
+    # This is the next generation
+    global generation
+    generation += 1
+
+    nn_networks = []
+    nn_birds = []
+    nn_genomes = []
+
+    for genome_id, genome in genomes:
+        genome.fitness = 0
+        network = neat.nn.FeedForwardNetwork.create(genome, config)
+        nn_networks.append(network)
+        nn_birds.append(Bird(50, const.HEIGHT / 2))
+        nn_genomes.append(genome)
+
+    # Setup Game State
     game_state = GameState(debug)
     game_state.init_window()
+    game_state.birds = nn_birds
 
     clock = pygame.time.Clock()
     # The current rendered frame, tracked separately from game state
@@ -534,7 +579,8 @@ if __name__ == "__main__":
     # The last time a frame was rendered, used to calculate frame time
     last_frame = time.time()
 
-    while True:
+    running = True
+    while running and len(nn_birds) > 0:
         # Prevent de-sync
         if game_state.state_frame != real_frame:
             assert False
@@ -551,7 +597,50 @@ if __name__ == "__main__":
         last_frame = next_frame
 
         # Perform per-frame game operations
-        game_state.do_update()
-        game_state.do_draw()
+        # Evaluate if the birds want to jump
+        for bird in game_state.birds:
+            bird.fitness += 0.1
+            dist = get_closest_point(bird, game_state)
+            output = nn_networks[nn_birds.index(bird)].activate((bird.y, dist[0], dist[1][1]))
+            
+            if output[0] > 0.2:
+                bird.jump()
+
+        # Update the game state
         game_state.do_event()
+        game_state.do_update()
+        
+        # Check for dead birds
+        for bird in game_state.birds:
+            if bird.dead:
+                index = nn_birds.index(bird)
+                bird.fitness -= 1
+                nn_networks.pop(index)
+                nn_genomes.pop(index)
+                nn_birds.pop(index)
+        
+        game_state.do_draw()
         pygame.display.update()
+
+
+
+if __name__ == "__main__":
+    debug = bool(sys.argv[1]) if (len(sys.argv) > 1) else False
+
+    config = neat.config.Config(
+        neat.DefaultGenome,
+        neat.DefaultReproduction,
+        neat.DefaultSpeciesSet,
+        neat.DefaultStagnation,
+        "config.txt"
+    )
+
+    population = neat.Population(config)
+
+    population.add_reporter(neat.StdOutReporter(True))
+    stats = neat.StatisticsReporter()
+    population.add_reporter(stats)
+
+    winner = population.run(eval_genomes, 50)
+
+

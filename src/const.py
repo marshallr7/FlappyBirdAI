@@ -36,7 +36,7 @@ BIRD_MIN_Y = 25
 BIRD_MAX_Y = FLOOR_Y
 # Bird Physics
 # Remember that y=0 is the top of the screen
-GRAVITY = 800
-JUMP_VELOCITY = -400
+GRAVITY = 1600
+JUMP_VELOCITY = -200
 MAX_VELOCITY = GRAVITY * 30
 MIN_VELOCITY = GRAVITY * -50
