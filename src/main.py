@@ -1,3 +1,10 @@
+"""
+AUTHOR:           Hunter Hageman, Marshall Patterson
+FILENAME:         main.py
+SPECIFICATION:    Create an Artificial Intelligence capable of playing Flappy Bird.
+FOR:              CS 3368 Introduction to Artificial Intelligence Section 001
+"""
+
 import math
 import random
 import sys
