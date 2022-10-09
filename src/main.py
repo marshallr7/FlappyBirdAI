@@ -36,9 +36,17 @@ img_num_9 = pygame.image.load("../assets/numbers/9.png")
 
 def dist_to_rect_side(rectangle_1, rectangle_2) -> tuple[float, list[float]]:
     """
-    Calculates the distance to the closest point of a rectangle
-    :param rectangle_2: the rectangle to check
-    :return: a tuple of the distance and closest point
+    NAME:           dist_to_rect_side
+    PARAMETERS:     rectangle_1, the rectangle to start from
+                    rectangle_2, the rectangle to calculate the distance to
+    PURPOSE:        This function calculates the distance from the center of rectangle_1
+                    to the closest edge of rectangle_2 to measure the distance to a collision.
+    PRECONDITION:   Both rectangles should be initialized and not None.
+    POSTCONDITION:  The rectangles will not be modified. A tuple will be returned.
+                    The first value of the tuple will be the distance to the closest edge as a float.
+                    The second value will be a coordinate pair of where the collision is, with
+                    the first value being the x position and the second value being the y position.
+                    The coordinates are returned as a list of floats.
     """
     # 8 states for the 8 areas created by dividing the coordinate space
     # along the sides of the rectangle (as if they were infinite)
@@ -53,6 +61,11 @@ def dist_to_rect_side(rectangle_1, rectangle_2) -> tuple[float, list[float]]:
     #     66 # 77 # 88
     #     66 # 77 # 88
 
+    # Center of rectangle 1
+    r1_center = rectangle_1.get_center_pos()
+    r1_x = r1_center[0]
+    r1_y = r1_center[1]
+
     # Rectangle sides as 1D planes
     left = rectangle_2.x
     right = rectangle_2.x + rectangle_2.size_x
@@ -62,31 +75,31 @@ def dist_to_rect_side(rectangle_1, rectangle_2) -> tuple[float, list[float]]:
     # The point to check distance to
     p: list[float]
     # State 1
-    if rectangle_1.x < left and rectangle_1.y < top:
+    if r1_x < left and r1_y < top:
         p = [rectangle_2.x, rectangle_2.y]
     # State 3
-    elif rectangle_1.x > right and rectangle_1.y < top:
+    elif r1_x > right and r1_y < top:
         p = [rectangle_2.x + rectangle_2.size_x, rectangle_2.y]
     # State 6
-    elif rectangle_1.x < left and rectangle_1.y > bot:
+    elif r1_x < left and r1_y > bot:
         p = [rectangle_2.x, rectangle_2.y + rectangle_2.size_y]
     # State 8
-    elif rectangle_1.x > right and rectangle_1.y > bot:
+    elif r1_x > right and r1_y > bot:
         p = [rectangle_2.x + rectangle_2.size_x, rectangle_2.y + rectangle_2.size_y]
     # State 2
-    elif rectangle_1.y < top:
-        p = [rectangle_1.x, rectangle_2.y]
+    elif r1_y < top:
+        p = [r1_x, rectangle_2.y]
     # State 7
-    elif rectangle_1.y > bot:
-        p = [rectangle_1.x, rectangle_2.y + rectangle_2.size_y]
+    elif r1_y > bot:
+        p = [r1_x, rectangle_2.y + rectangle_2.size_y]
     # State 4
-    elif rectangle_1.x < left:
-        p = [rectangle_2.x, rectangle_1.y]
+    elif r1_x < left:
+        p = [rectangle_2.x, r1_y]
     # State 5
     else:
-        p = [rectangle_2.x + rectangle_2.size_x, rectangle_1.y]
+        p = [rectangle_2.x + rectangle_2.size_x, r1_y]
 
-    return math.dist([rectangle_1.x, rectangle_1.y], p), p
+    return math.dist([r1_x, r1_y], p), p
 
 
 def get_closest_point(rectangle, game_state):
