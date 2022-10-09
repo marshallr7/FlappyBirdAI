@@ -120,7 +120,32 @@ class DrawableEntity:
         assert False
 
 
-class Bird(DrawableEntity):
+class Rectangle(DrawableEntity):
+    """
+    A solid color rectangle.
+    The x/y position is the top left of the rectangle
+    """
+    size_x: float
+    size_y: float
+
+    def __init__(self, x, y, size_x, size_y):
+        super().__init__(x, y)
+        self.size_x = size_x
+        self.size_y = size_y
+
+    def get_center_pos(self):
+        """
+        Get the center position of this sprite
+        This is calculated by adding half of the size to the top left coordinate
+        :return: a 2 entry list of the x and y positions respectively
+        """
+        return [self.x + (self.size_x / 2), self.y + (self.size_y / 2)]
+
+    def draw(self, game_state, surface: pygame.Surface):
+        pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.x, self.y, self.size_x, self.size_y))
+
+
+class Bird(Rectangle):
     """
     A bird which can be controlled by the player or an AI.
     """
@@ -134,7 +159,7 @@ class Bird(DrawableEntity):
     fitness: float
 
     def __init__(self, x, y):
-        super().__init__(x, y)
+        super().__init__(x, y, const.BIRD_X, const.BIRD_Y)
         self.velocity = 0
         self.dead = False
         self.threat = 0
@@ -148,11 +173,11 @@ class Bird(DrawableEntity):
         dist = get_closest_point(self, game_state)
         if dist[0] < const.BIRD_DEATH:
             self.dead = True
-        
+
         # Dead :(
         if self.dead:
             pass
-        
+
         # Position Check
         # Move the bird to a safe area if needed
         if self.y < const.BIRD_MIN_Y:
@@ -179,31 +204,6 @@ class Bird(DrawableEntity):
 
     def draw(self, game_state, surface: pygame.Surface):
         surface.blit(img_bird, (self.x, self.y))
-
-
-class Rectangle(DrawableEntity):
-    """
-    A solid color rectangle.
-    The x/y position is the top left of the rectangle
-    """
-    size_x: float
-    size_y: float
-
-    def __init__(self, x, y, size_x, size_y):
-        super().__init__(x, y)
-        self.size_x = size_x
-        self.size_y = size_y
-
-    def get_center_pos(self):
-        """
-        Get the center position of this sprite
-        This is calculated by adding half of the size to the top left coordinate
-        :return: a 2 entry list of the x and y positions respectively
-        """
-        return [self.x + (self.size_x / 2), self.y + (self.size_y / 2)]
-
-    def draw(self, game_state, surface: pygame.Surface):
-        pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.x, self.y, self.size_x, self.size_y))
 
 
 class Pipe(Rectangle):
@@ -621,7 +621,6 @@ def eval_genomes(genomes, config):
         
         game_state.do_draw()
         pygame.display.update()
-
 
 
 if __name__ == "__main__":
