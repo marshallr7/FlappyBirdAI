@@ -102,18 +102,29 @@ def dist_to_rect_side(rectangle_1, rectangle_2) -> tuple[float, list[float]]:
     return math.dist([r1_x, r1_y], p), p
 
 
-def get_closest_point(rectangle, game_state):
-    # Check distances to all rectangles and find the closest
-    dist = 10000000.0
-    point = list[int]
+def get_closest_point(rectangle, game_state) -> tuple[float, list[float]]:
+    """
+    NAME:           get_closest_point
+    PARAMETERS:     rectangle, the rectangle to start from
+                    game_state, the state of the game the rectangle is in
+    PURPOSE:        This function measures the distance from the provided rectangle
+                    to the closest rectangle side in the game state
+    PRECONDITION:   Both parameters should be initialized and not None. There must be at least one other
+                    rectangle in the game state which is not the same as the rectangle parameter.
+    POSTCONDITION:  The parameters will not be modified. A tuple will be returned.
+                    The first value of the tuple will be the distance to the closest edge as a float.
+                    The second value will be a coordinate pair of where the collision is, with
+                    the first value being the x position and the second value being the y position.
+                    The coordinates are returned as a list of floats.
+    """
+    closest = 1000000.0, list[int]
     for e in game_state.entities:
         if isinstance(e, Rectangle):
             dist_tuple = dist_to_rect_side(rectangle, e)
-            if dist_tuple[0] < dist:
-                dist = dist_tuple[0]
-                point = dist_tuple[1]
+            if dist_tuple[0] < closest[0]:
+                closest = dist_tuple
 
-    return dist, point
+    return closest
 
 
 class DrawableEntity:
