@@ -661,35 +661,56 @@ def add_pipe_pair(entity_list, pipe_pair_list, x):
 
 class GameState:
     """
-    An organized structure of all entities in the game
+    NAME:           GameState
+    PURPOSE:        A class which contains all entities and properties of an active game.
+                    This can be considered a class which represents the game itself.
+                    All driving logic for the game is contained in this class.
+    INVARIANTS:     All fields are initialized and not none.
+                    Delta and pipes_passed are always positive.
+                    Delta cannot be zero.
     """
+    # The drawing surface we draw our entities to for each frame
     surface: pygame.Surface
     # Time change since the last frame was rendered
     delta: float
-    # The frame of this game state
-    state_frame: int
 
+    # All alive birds in the game,
     birds: list[Bird]
+    # The number of pipes the birds have passed
     pipes_passed: int
+    # The entities to update and draw on each frame
     entities: list[GameEntity]
+    # The pipe pairs in the game
     pipes: list[PipePair]
+    # The floor instance
     floor: Floor
+    # The background images
     background: pygame.Surface
+    # The x location of the background images
     bg_i: int
 
+    # How fast the pipes are moving each frame
     pipe_speed: int
 
-    def __init__(self, debug: bool):
+    def __init__(self, debug: bool, birds: list[Bird]):
+        """
+        NAME:           GameState.__init__
+        PARAMETERS:     debug, if lines should be drawn from each bird and the mouse to the nearest threat
+                        birds, a list of created birds to render and update
+        PURPOSE:        This method initializes fields for a new PipePassCounter instance
+        PRECONDITION:   There are no other instances of this class present
+        POSTCONDITION:  This instance's fields are initialized to the provided parameters.
+        """
         self.delta = 0
-        self.state_frame = 0
 
-        self.birds = list()
+        self.birds = birds
         self.pipes_passed = 0
 
         self.entities = list()
         self.pipes = list()
 
-        # Spawn pipes with their set distances, need to include trash distance for consistency
+        # Spawn pipes with their set distances, need to include trash distance for consistency.
+        # This method means that if the window width changes then the pipe distance does as well.
         add_pipe_pair(self.entities, self.pipes, (const.PIPE_TRASH + const.WIDTH))
         add_pipe_pair(self.entities, self.pipes, (const.PIPE_TRASH + const.WIDTH) * 1.4)
         add_pipe_pair(self.entities, self.pipes, (const.PIPE_TRASH + const.WIDTH) * 1.8)
@@ -704,105 +725,142 @@ class GameState:
         # add the pipe counter
         self.entities.append(PipePassCounter(50, 50))
 
+        # Add a DistanceLine for each bird and the mouse if we are debugging
         if debug:
             self.entities.append(MouseLine())
-            self.entities.append(DistanceLine(self.bird))
+            for bird in self.birds:
+                self.entities.append(DistanceLine(bird))
 
+        # Set up the background
         self.background = img_background
         self.bg_i = 0
 
         self.pipe_speed = const.INIT_SPEED
 
     def init_window(self):
+        """
+        NAME:           GameState.init_window
+        PARAMETERS:     None
+        PURPOSE:        This method initializes the pygame window and sets the frame rate.
+        PRECONDITION:   The window hasn't been initialized before.
+        POSTCONDITION:  The window is initialized and this instance is ready to update it each frame.
+        """
         self.surface = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
-        self.bg_i = 0
 
         pygame.display.set_caption("Flappy Bird AI")
         clock = pygame.time.Clock()
-        clock.tick(30)
+        clock.tick(const.FPS)
 
     def do_update(self):
         """
-        Update entities before drawing them.
-        :return: None
+        NAME:           GameState.do_update
+        PARAMETERS:     None
+        PURPOSE:        This method updates all game entities each frame before they are drawn.
+        PRECONDITION:   The previous frame has been drawn, and the delta has been updated with the previous frame time.
+        POSTCONDITION:  All entities have been updated and are ready to be drawn to the next frame.
         """
-        self.state_frame = self.state_frame + 1
+        # Increase the pipe speed
         self.pipe_speed += const.GAIN_SPEED * self.delta
 
+        # Update the background
         if self.bg_i == -const.WIDTH:
             self.bg_i = 0
             self.surface.blit(self.background, (const.WIDTH + self.bg_i, 0))
         self.bg_i -= 1
 
+        # Update the floor
         self.floor.update(self)
 
+        # Update all pipe pairs
         for pipe_pair in self.pipes:
             pipe_pair.update(self)
 
+        # Update all entities
         for entity in self.entities:
             entity.update(self)
 
+        # Update all birds, this should be last so that the threat is calculated properly
         for bird in self.birds:
             bird.update(self)
 
     def do_draw(self):
         """
-        Draw entities onto the window surface.
-        :return: None
+        NAME:           GameState.do_draw
+        PARAMETERS:     None
+        PURPOSE:        This method draws all game entities to the next frame
+        PRECONDITION:   All entities have been updated for the frame we're about to draw.
+        POSTCONDITION:  All entities are drawn to the next frame.
         """
+        # Draw the background
         self.surface.blit(self.background, (self.bg_i, 0))
         self.surface.blit(self.background, (const.WIDTH + self.bg_i, 0))
 
+        # Draw each entity
         for entity in self.entities:
             entity.draw(self)
 
+        # Always draw the birds on top
         for bird in self.birds:
             bird.draw(self)
 
     def do_event(self):
+        """
+        NAME:           GameState.do_event
+        PARAMETERS:     None
+        PURPOSE:        This method processes all events each frame, events are mostly from the user.
+        PRECONDITION:   The frame has not been updated or drawn yet.
+        POSTCONDITION:  All relevant logic has been executed for each event.
+        """
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 exit()
 
 
+# The generation of neural networks in the NEAT algorithm.
 generation = 0
 
 
 def eval_genomes(genomes, config):
+    """
+    NAME:           eval_genomes
+    PARAMETERS:     genomes, a collection of "individuals" in a generation which we represent as birds
+                    config, the configuration for how the NEAT algorithm behaves and mutates the neural networks
+    PURPOSE:        This method creates a new game and populates the birds in it.
+                    Then it runs the game to measure the fitness of each bird in the game for evolution.
+    PRECONDITION:   The previous game state has been discarded or doesn't exist.
+    POSTCONDITION:  All birds are dead, and their fitness has been measured
+    """
     # This is the next generation
     global generation
     generation += 1
 
+    # Store each network, bird, and genome in lists where the index is shared between the three
     nn_networks = []
     nn_birds = []
     nn_genomes = []
 
+    # Process each genome into a bird
     for genome_id, genome in genomes:
+        # Reset fitness each generation
         genome.fitness = 0
+        # Create a network from the genome
         network = neat.nn.FeedForwardNetwork.create(genome, config)
         nn_networks.append(network)
+        # Create a bird for the Genome/Network
         nn_birds.append(Bird(50, const.HEIGHT / 2))
         nn_genomes.append(genome)
 
     # Setup Game State
-    game_state = GameState(debug)
+    game_state = GameState(debug, nn_birds)
     game_state.init_window()
-    game_state.birds = nn_birds
 
     clock = pygame.time.Clock()
-    # The current rendered frame, tracked separately from game state
-    real_frame = 0
     # The last time a frame was rendered, used to calculate frame time
     last_frame = time.time()
 
     running = True
     while running and len(nn_birds) > 0:
-        # Prevent de-sync
-        if game_state.state_frame != real_frame:
-            assert False
-
-        real_frame = real_frame + 1
-        # Limit the frame rate
+        # Limit the frame rate, this needs to be called every frame
         clock.tick(const.FPS)
 
         # Calculate the time since the last frame
@@ -812,36 +870,56 @@ def eval_genomes(genomes, config):
         game_state.delta = next_frame - last_frame
         last_frame = next_frame
 
-        # Perform per-frame game operations
-        # Evaluate if the birds want to jump
-        for bird in game_state.birds:
-            bird.fitness += 0.1
-            dist = get_closest_point(bird, game_state)
-            output = nn_networks[nn_birds.index(bird)].activate((bird.y, dist[0], dist[1][1]))
-            
-            if output[0] > 0.2:
-                bird.jump()
-
         # Update the game state
         game_state.do_event()
         game_state.do_update()
+
+        # Perform per-frame game operations
+        # Evaluate if the birds want to jump
+        for bird in game_state.birds:
+            # Increase th fitness for how long the bird lives.
+            # Remember the delta is milliseconds
+            # 60fps would be 1.6 fitness increase each frame
+            # 100 fitness each second
+            bird.fitness += 0.1 * game_state.delta
+
+            # Measure the single output of the network according to various properties about the bird's current state
+            output = nn_networks[nn_birds.index(bird)].activate((bird.y, bird.threat))
+
+            # If the output is high, then jump
+            if output[0] > 0.2:
+                bird.jump()
         
-        # Check for dead birds
+        # Check for dead birds and remove them
         for bird in game_state.birds:
             if bird.dead:
+                # Get the index of the bird
                 index = nn_birds.index(bird)
+                # Punish death
                 bird.fitness -= 1
+                # Remove the bird from our lists
                 nn_networks.pop(index)
                 nn_genomes.pop(index)
                 nn_birds.pop(index)
-        
+
+        # Draw the next frame
         game_state.do_draw()
+        # Display the next frame
         pygame.display.update()
 
 
 if __name__ == "__main__":
+    """
+    NAME:           __name__
+    PARAMETERS:     None
+    PURPOSE:        This logic drives the Neat algorithm and game states to train the neural network.
+    PRECONDITION:   None, this is the first thing executed in the program.
+    POSTCONDITION:  The neural network has been trained.
+    """
+    # Parse arguments for if we want debugging features
     debug = bool(sys.argv[1]) if (len(sys.argv) > 1) else False
 
+    # Load the NEAT configuration
     config = neat.config.Config(
         neat.DefaultGenome,
         neat.DefaultReproduction,
@@ -850,12 +928,15 @@ if __name__ == "__main__":
         "config.txt"
     )
 
+    # Create a population for out birds
     population = neat.Population(config)
 
+    # Add logging for each generation
     population.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)
 
+    # Run NEAT on our population and determine the best genome
     winner = population.run(eval_genomes, 50)
 
 
