@@ -366,7 +366,7 @@ class PipePair(GameEntity):
     top_pipe: Pipe
     bot_pipe: Pipe
     # The X position of the pipes, their position is set to this
-    x: int
+    x: float
     # If the bird has passed this set of pipes
     passed: bool
 
