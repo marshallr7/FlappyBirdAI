@@ -230,8 +230,8 @@ class Bird(Rectangle):
     velocity: float
     # If the bird is dead
     dead: bool
-    # Distance to the closest threat
-    threat: float
+    # Distance to the closest threat and location of the closest point
+    threat: tuple[float, list[float]]
     # The fitness of this bird within a generation
     fitness: float
 
@@ -246,7 +246,7 @@ class Bird(Rectangle):
         super().__init__(const.BIRD_POS_X, y, const.BIRD_X, const.BIRD_Y)
         self.velocity = 0
         self.dead = False
-        self.threat = 0
+        self.threat = tuple()
         self.fitness = 0
 
     def jump(self):
@@ -271,7 +271,7 @@ class Bird(Rectangle):
         if dist[0] < const.BIRD_DEATH:
             self.dead = True
         else:
-            self.threat = dist[0]
+            self.threat = dist
 
         # The bird has died, stop the update
         if self.dead:
@@ -884,7 +884,7 @@ def eval_genomes(genomes, config):
             bird.fitness += 0.1 * game_state.delta
 
             # Measure the single output of the network according to various properties about the bird's current state
-            output = nn_networks[nn_birds.index(bird)].activate((bird.y, bird.threat))
+            output = nn_networks[nn_birds.index(bird)].activate((bird.y, bird.threat[0], bird.threat[1][1]))
 
             # If the output is high, then jump
             if output[0] > 0.2:
