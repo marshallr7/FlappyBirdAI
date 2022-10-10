@@ -350,6 +350,11 @@ class Pipe(Rectangle):
 
 class PipePair(GameEntity):
     """
+    NAME:           PipePair
+    PURPOSE:        A game entity linked to two pipes that have the same x position.
+    INVARIANTS:     x must not be None and initialized
+    """
+    """
     A Pair of Pipes in the game.
     Both need to be tracked so that it is known when the bird passes one pair of pipes.
     Also removes a check to move a pipe, since only this object needs to be updated.
@@ -361,11 +366,15 @@ class PipePair(GameEntity):
     # The X position of the pipes, their position is set to this
     x: int
     # If the bird has passed this set of pipes
+    passed: bool
 
     def __init__(self, x: int):
         """
-        Initialize a pipe pair at the provided x coordinate
-        :param x: the x coordinate to place the pipes at
+        NAME:           PipePair.__init__
+        PARAMETERS:     x, the location of the left side of both pipes
+        PURPOSE:        This method initializes fields for a new PipePair instance.
+        PRECONDITION:   all parameters are not none and are initialized.
+        POSTCONDITION:  This instance's fields are initialized to the provided parameters.
         """
         super().__init__(x, 0)
         self.x = x
@@ -376,13 +385,16 @@ class PipePair(GameEntity):
 
     def change_gap(self):
         """
-        Change the y positions of the pipes to move where the gap is.
-        Called on init and when the pipes move past the bird off-screen
-        :return: None
+        NAME:           PipePair.change_gap
+        PARAMETERS:     None
+        PURPOSE:        This method updates the y positions of both pipes to create a gap between them
+        PRECONDITION:   the pipes have passed the left side of the screen and are no longer visible
+        POSTCONDITION:  the pipes have new randomly generated positions which moves
+                        them and changes the size of their gap
         """
         # Calculate the gap size
         gap = random.randrange(const.GAP_MIN, const.GAP_MAX)
-        # The lowest point the top of the gap can be at to not be too low
+        # The lowest point the top of the gap can be at to not be too low to show the end of the image
         lowest = const.HEIGHT - const.PIPE_BOT - gap
         # Where the top pipe will reach to
         pipe_loc = random.randrange(const.PIPE_TOP, lowest)
@@ -393,18 +405,21 @@ class PipePair(GameEntity):
 
     def update(self, game_state):
         """
-        Update the positions of the pipes for them.
-        We don't want to handle varying state of if this or the pipes update before/after each other.
-
-        :param game_state: the current state of the game we update from
-        :return: None
+        NAME:           PipePair.update
+        PURPOSE:        This method updates the locations of the pipes to move them to the left for their update.
+                        If the pipes are off-screen to the left of the bird then they are moved
+                        to the right side of the screen and have their gap/position updated.
+        PRECONDITION:   The pipes are initialized and not none.
+        POSTCONDITION:  The location of the pipes for this instance have been updated.
+                        The score counter is incremented if the popes are passed.
+                        The pipes are moved to the right side of the screen if they have moved off-screen.
         """
         self.x -= game_state.pipe_speed * game_state.delta
 
         # # Pipes have passed the bird, increment the pipe counter
-        # if self.x + const.PIPE_X < game_state.bird.x and not self.passed:
-        #     self.passed = True
-        #     game_state.pipes_passed += 1
+        if self.x + const.PIPE_X < game_state.bird.x and not self.passed:
+            self.passed = True
+            game_state.pipes_passed += 1
 
         # Pipes moved off-screen, change the gap and move them to the right
         if self.x < const.PIPE_TRASH:
@@ -413,6 +428,7 @@ class PipePair(GameEntity):
             # We're in front of the bird now
             self.passed = False
 
+        # Set the new x positions of the pipes
         self.top_pipe.x = self.x
         self.bot_pipe.x = self.x
 
