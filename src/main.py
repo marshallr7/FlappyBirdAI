@@ -463,7 +463,7 @@ class FloorTile(Rectangle):
 
 class Floor(GameEntity):
     """
-    NAME:           FloorTile
+    NAME:           Floor
     PURPOSE:        A game entity representing a floor section that will kill the bird on contact.
     INVARIANTS:     x must not be None and initialized
     """
@@ -472,7 +472,7 @@ class Floor(GameEntity):
 
     def __init__(self):
         """
-        NAME:           FloorTile.__init__
+        NAME:           Floor.__init__
         PARAMETERS:     None
         PURPOSE:        This method initializes fields for a new Floor instance and creates
                         the needed FloorTile instances.
