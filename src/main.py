@@ -270,6 +270,8 @@ class Bird(Rectangle):
         dist = get_closest_point(self, game_state)
         if dist[0] < const.BIRD_DEATH:
             self.dead = True
+        else:
+            self.threat = dist[0]
 
         # The bird has died, stop the update
         if self.dead:
@@ -504,66 +506,88 @@ class Floor(GameEntity):
 
 
 class DistanceLine(GameEntity):
-    # The distance to the closest point
-    dist: float
-    # The point we are closest to
-    point: list[float]
+    """
+    NAME:           DistanceLine
+    PURPOSE:        A game entity which draws a line from a referenced entity to the closest rectangle side.
+    INVARIANTS:     x must not be None and initialized
+    """
+    # the entity to start at
+    start: Rectangle
+    # The distance and location of the closest side
+    closest: tuple[float, list[float]]
 
-    def __init__(self):
+    def __init__(self, start: Rectangle):
+        """
+        NAME:           DistanceLine.__init__
+        PARAMETERS:     start, the entity which the line will start from and distance is measured from
+        PURPOSE:        This method initializes fields for a new DistanceLine instance and creates
+                        the needed FloorTile instances.
+        PRECONDITION:   the img_base global variable is set
+        POSTCONDITION:  This instance's fields are initialized to the provided parameters.
+        """
         # The position of this entity updates every frame
         super().__init__(0, 0)
-        self.dist = 0
-        self.point = [0, 0]
+        self.start = start
+        # Initialize to an empty tuple, this will always be updated before a draw
+        self.closest = tuple()
 
-    def set_closest_point(self, game_state):
-        # Check distances to all rectangles and find the closest
-        self.dist = 10000000.0
-        for e in game_state.entities:
-            if isinstance(e, Rectangle):
-                dist_tuple = dist_to_rect_side(self, e)
-                if dist_tuple[0] < self.dist:
-                    self.dist = dist_tuple[0]
-                    self.point = dist_tuple[1]
+    def update(self, game_state):
+        """
+        NAME:           DistanceLine.update
+        PURPOSE:        This method updates the distance and closest surface location for the line to be drawn.
+        PRECONDITION:   self.start must be set,
+        POSTCONDITION:  The closest field is updated with the distance to the closest side and the intersecting point
+        """
+        self.closest = get_closest_point(self.start, game_state)
 
     def draw(self, game_state):
-        pygame.draw.line(game_state.surface, (255, 0, 255), [self.x, self.y], self.point)
+        """
+        NAME:           DistanceLine.draw
+        PARAMETERS:     game_state, the game state this entity is a part of
+        PURPOSE:        This method draws a line from this instances start and to the closest point.
+        PRECONDITION:   This instance is a part of the provided game state.
+        POSTCONDITION:  The surface of game_state will have this entity drawn onto it
+        """
+        # The line will be pink
+        pygame.draw.line(game_state.surface, (255, 0, 255), [self.x, self.y], self.closest[1])
 
 
 class MouseLine(DistanceLine):
+    """
+    NAME:           MouseLine
+    PURPOSE:        A game entity which draws a line from the mouse location to the closest rectangle side.
+    INVARIANTS:     A mouse must exist within pygame, this may not work with touch screen devices.
+    """
+    # A single pixel sized rectangle that is moved to the mouse position each frame
+    # This rectangle is not exposed to the game state and is not drawn
+    mouse_rect: Rectangle
+
+    def __init__(self):
+        """
+        NAME:           MouseLine.__init__
+        PARAMETERS:     None
+        PURPOSE:        This method initializes fields for a new MouseLine instance and creates
+                        a new rectangle instance.
+        PRECONDITION:   a mouse exists in pygame
+        POSTCONDITION:  This instance's fields are initialized to the provided parameters.
+        """
+        self.mouse_rect = Rectangle(0, 0, 1, 1)
+        super().__init__(self.mouse_rect)
+
     def update(self, game_state):
-        # Compare distance to the mouse position
+        """
+        NAME:           MouseLine.update
+        PURPOSE:        This method updates the distance and closest surface location for the line to be drawn.
+        PRECONDITION:   a mouse must be available in pygame
+        POSTCONDITION:  mouse_rect is updated to be at the same location as the mouse and the line is drawn
+        """
+        # Update the rectangle to the mouse position
         mouse_pos = pygame.mouse.get_pos()
-        self.x = mouse_pos[0]
-        self.y = mouse_pos[1]
+        self.mouse_rect.x = mouse_pos[0]
+        self.mouse_rect.y = mouse_pos[1]
 
-        self.set_closest_point(game_state)
-
-
-class BirdLine(DistanceLine):
-    def update(self, game_state):
-        bird_pos = [game_state.bird.x + const.BIRD_X / 2, game_state.bird.y + const.BIRD_Y / 2]
-        self.x = bird_pos[0]
-        self.y = bird_pos[1]
-
-        self.set_closest_point(game_state)
-
-
-class BirdDistanceCheck(DistanceLine):
-    """
-    Entity which sets the distance of the bird from the closest object.
-    Also handles bird death.
-    """
-    def update(self, game_state):
-        bird_pos = [game_state.bird.x + const.BIRD_X / 2, game_state.bird.y + const.BIRD_Y / 2]
-        self.x = bird_pos[0]
-        self.y = bird_pos[1]
-
-        self.set_closest_point(game_state)
-
-        if self.dist < const.BIRD_DEATH:
-            game_state.bird.dead = True
-        else:
-            game_state.bird.threat = self.dist
+        # Update the closest point with super class logic
+        super().update(game_state)
 
 
 class PipePassCounter(GameEntity):
@@ -661,7 +685,7 @@ class GameState:
 
         if debug:
             self.entities.append(MouseLine())
-            self.entities.append(BirdLine())
+            self.entities.append(DistanceLine(self.bird))
 
         self.background = img_background
         self.bg_i = 0
