@@ -642,7 +642,7 @@ class PipePassCounter(GameEntity):
                 game_state.surface.blit(img_num_9, pos)
 
 
-def add_pipe_pair(entity_list, pipe_list, x):
+def add_pipe_pair(entity_list, pipe_pair_list, x):
     """
     NAME:           add_pipe_pair
     PARAMETERS:     entity_list, a list of entities related to a game_state for the pipes to be added to
@@ -656,7 +656,7 @@ def add_pipe_pair(entity_list, pipe_list, x):
     new_pair = PipePair(x)
     entity_list.append(new_pair.top_pipe)
     entity_list.append(new_pair.bot_pipe)
-    pipe_list.append(new_pair)
+    pipe_pair_list.append(new_pair)
 
 
 class GameState:
