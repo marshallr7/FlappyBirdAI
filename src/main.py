@@ -303,7 +303,7 @@ class Bird(Rectangle):
         """
         NAME:           Bird.draw
         PARAMETERS:     game_state, the game state this entity is a part of
-        PURPOSE:        This method draws a red rectangle to the surface that will be used for the next frame.
+        PURPOSE:        This method draws a bird to the surface that will be used for the next frame.
         PRECONDITION:   This instance is a part of the provided game state,
         POSTCONDITION:  The surface of game_state will have this entity drawn onto it
         """
@@ -312,13 +312,24 @@ class Bird(Rectangle):
 
 class Pipe(Rectangle):
     """
-    A single pipe in the game.
-    The x/y position is the top left point of the pipe sprite
+    NAME:           Pipe
+    PURPOSE:        A game entity representing a pipe that will kill the bird on contact.
+    INVARIANTS:     x and y must not be None and initialized
+                    top must be True or False
     """
     img: pygame.Surface
     top: bool
 
     def __init__(self, x, y, top):
+        """
+        NAME:           Pipe.__init__
+        PARAMETERS:     x and y coordinates of the top left corner of this entity
+                        top is False when this pipe connects with the floor
+                        top is True when this pipe should be flipped and go up through the top of the screen
+        PURPOSE:        This method initializes fields for a new Pipe instance.
+        PRECONDITION:   all parameters are not none and are initialized.
+        POSTCONDITION:  This instance's fields are initialized to the provided parameters.
+        """
         super().__init__(x, y, const.PIPE_X, const.PIPE_Y)
         self.top = top
         if top:
@@ -327,6 +338,13 @@ class Pipe(Rectangle):
             self.img = img_pipe_bot
 
     def draw(self, game_state):
+        """
+        NAME:           Pipe.draw
+        PARAMETERS:     game_state, the game state this entity is a part of
+        PURPOSE:        This method draws the respective pipe image to the surface that will be used for the next frame.
+        PRECONDITION:   This instance is a part of the provided game state,
+        POSTCONDITION:  The surface of game_state will have this entity drawn onto it
+        """
         game_state.surface.blit(self.img, [self.x, self.y])
 
 
