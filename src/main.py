@@ -692,7 +692,7 @@ class GameState:
     # How fast the pipes are moving each frame
     pipe_speed: int
 
-    def __init__(self, debug: bool, birds: list[Bird]):
+    def __init__(self, debug_entities: bool, birds: list[Bird]):
         """
         NAME:           GameState.__init__
         PARAMETERS:     debug, if lines should be drawn from each bird and the mouse to the nearest threat
@@ -726,7 +726,7 @@ class GameState:
         self.entities.append(PipePassCounter(50, 50))
 
         # Add a DistanceLine for each bird and the mouse if we are debugging
-        if debug:
+        if debug_entities:
             self.entities.append(MouseLine())
             for bird in self.birds:
                 self.entities.append(DistanceLine(bird))
@@ -820,7 +820,7 @@ class GameState:
 generation = 0
 
 
-def eval_genomes(genomes: list[neat.genome.DefaultGenome], config: neat.config.Config):
+def eval_genomes(genomes: list[neat.genome.DefaultGenome], neat_config: neat.config.Config):
     """
     NAME:           eval_genomes
     PARAMETERS:     genomes, a collection of "individuals" in a generation which we represent as birds
@@ -844,7 +844,7 @@ def eval_genomes(genomes: list[neat.genome.DefaultGenome], config: neat.config.C
         # Reset fitness each generation
         genome.fitness = 0
         # Create a network from the genome
-        network = neat.nn.FeedForwardNetwork.create(genome, config)
+        network = neat.nn.FeedForwardNetwork.create(genome, neat_config)
         nn_networks.append(network)
         # Create a bird for the Genome/Network
         nn_birds.append(Bird(const.HEIGHT / 2))
@@ -938,5 +938,3 @@ if __name__ == "__main__":
 
     # Run NEAT on our population and determine the best genome
     winner = population.run(eval_genomes, 50)
-
-
