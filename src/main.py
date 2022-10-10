@@ -221,18 +221,28 @@ class Rectangle(GameEntity):
 
 class Bird(Rectangle):
     """
-    A bird which can be controlled by the player or an AI.
+    NAME:           Bird
+    PURPOSE:        A game entity representing a moving bird.
+    INVARIANTS:     x and y must not be None and initialized
+                    y must be within the const.BIRD_MIN_Y and const.BIRD_MAX_Y
     """
     # The y velocity of the bird
     velocity: float
-    # True when the bird has died
+    # If the bird is dead
     dead: bool
-    # Distance to closest threat
+    # Distance to the closest threat
     threat: float
     # The fitness of this bird within a generation
     fitness: float
 
     def __init__(self, x, y):
+        """
+        NAME:           Bird.__init__
+        PARAMETERS:     x and y coordinates of the top left corner of this entity
+        PURPOSE:        This method initializes fields for a new Bird instance.
+        PRECONDITION:   all parameters are not none and are initialized.
+        POSTCONDITION:  This instance's fields are initialized to the provided parameters.
+        """
         super().__init__(x, y, const.BIRD_X, const.BIRD_Y)
         self.velocity = 0
         self.dead = False
@@ -240,15 +250,28 @@ class Bird(Rectangle):
         self.fitness = 0
 
     def jump(self):
+        """
+        NAME:           Bird.jump
+        PURPOSE:        This method makes the bird jump from its current position regardless of current velocity.
+        PRECONDITION:   None
+        POSTCONDITION:  This instance's velocity is set to the jumping velocity
+        """
         self.velocity = const.JUMP_VELOCITY
 
     def update(self, game_state):
+        """
+        NAME:           Bird.update
+        PURPOSE:        This method performs checks and calculations each frame to detect if the bird has died,
+                        and the new velocity/position for the bird.
+        PRECONDITION:   The bird is not dead.
+        POSTCONDITION:  This instance's fields have been updated
+        """
         # Check if we're colliding
         dist = get_closest_point(self, game_state)
         if dist[0] < const.BIRD_DEATH:
             self.dead = True
 
-        # Dead :(
+        # The bird has died, stop the update
         if self.dead:
             pass
 
@@ -267,7 +290,7 @@ class Bird(Rectangle):
         # Gravity update
         self.velocity += const.GRAVITY * game_state.delta
 
-        # Bounds check
+        # Bounds check for velocity
         if self.velocity > const.MAX_VELOCITY:
             self.velocity = const.MAX_VELOCITY
         elif self.velocity < const.MIN_VELOCITY:
@@ -277,6 +300,13 @@ class Bird(Rectangle):
         self.y += self.velocity * game_state.delta
 
     def draw(self, game_state):
+        """
+        NAME:           Bird.draw
+        PARAMETERS:     game_state, the game state this entity is a part of
+        PURPOSE:        This method draws a red rectangle to the surface that will be used for the next frame.
+        PRECONDITION:   This instance is a part of the provided game state,
+        POSTCONDITION:  The surface of game_state will have this entity drawn onto it
+        """
         game_state.surface.blit(img_bird, (self.x, self.y))
 
 
