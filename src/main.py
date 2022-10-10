@@ -127,31 +127,55 @@ def get_closest_point(rectangle, game_state) -> tuple[float, list[float]]:
     return closest
 
 
-class DrawableEntity:
-    # Absolute positions can change based on the object
-    # Circle position is center, rectangle is top left, etc
+class GameEntity:
+    """
+    NAME:           DrawableEntity
+    PURPOSE:        A super class for all game entities which need to be updated or drawn to the screen
+                    x and y coordinate, and update/draw methods to be called each frame.
+    INVARIANTS:     x and y can be any positive or negative float value. x and y are not always the top left coordinate
+                    depending on the implementing class. x and y will not be none or uninitialized
+    """
+    # Absolute positions can change based on the subclass
+    # Circle position is center, Rectangle is top left, etc.
+    # But for the most part, rectangle is used
     x: float
     y: float
     
     def __init__(self, x, y):
+        """
+        NAME:           DrawableEntity.__init__
+        PARAMETERS:     x and y coordinates of the location of this entity
+        PURPOSE:        This method initializes fields for a new DrawableEntity instance.
+        PRECONDITION:   x and y are not none and are initialized.
+        POSTCONDITION:  This instance's fields are initialized to the provided parameters.
+        """
         self.x = x
         self.y = y
 
     def update(self, game_state):
         """
-        Update the entity before being drawn, if needed.
-        :param game_state: the GameState instance this entity belongs to
-        :return: None
+        NAME:           DrawableEntity.update
+        PARAMETERS:     game_state, the game state this entity is a part of
+        PURPOSE:        This method updates the properties of this instance to be rendered on the next frame.
+        PRECONDITION:   This instance is a part of the provided game state
+        POSTCONDITION:  This instance is updated and ready to be rendered on the next frame.
         """
+        # This is the default behavior, which is to not update since not every entity updates each frame
         pass
     
-    def draw(self, game_state, surface: pygame.Surface):
-        # Error, this should be implemented
-        # No abstract classes in plain python?
+    def draw(self, game_state):
+        """
+        NAME:           DrawableEntity.draw
+        PARAMETERS:     game_state, the game state this entity is a part of
+        PURPOSE:        This method draws this entity to the surface that will be used for the next frame.
+        PRECONDITION:   This instance is a part of the provided game state,
+        POSTCONDITION:  The surface of game_state will have this entity drawn onto it
+        """
+        # Error, this should be implemented for drawn entities, or not called if the entity doesn't draw itself
         assert False
 
 
-class Rectangle(DrawableEntity):
+class Rectangle(GameEntity):
     """
     A solid color rectangle.
     The x/y position is the top left of the rectangle
@@ -172,8 +196,8 @@ class Rectangle(DrawableEntity):
         """
         return [self.x + (self.size_x / 2), self.y + (self.size_y / 2)]
 
-    def draw(self, game_state, surface: pygame.Surface):
-        pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.x, self.y, self.size_x, self.size_y))
+    def draw(self, game_state):
+        pygame.draw.rect(game_state.surface, (255, 0, 0), pygame.Rect(self.x, self.y, self.size_x, self.size_y))
 
 
 class Bird(Rectangle):
@@ -233,8 +257,8 @@ class Bird(Rectangle):
         # Update Position
         self.y += self.velocity * game_state.delta
 
-    def draw(self, game_state, surface: pygame.Surface):
-        surface.blit(img_bird, (self.x, self.y))
+    def draw(self, game_state):
+        game_state.surface.blit(img_bird, (self.x, self.y))
 
 
 class Pipe(Rectangle):
@@ -253,11 +277,11 @@ class Pipe(Rectangle):
         else:
             self.img = img_pipe_bot
 
-    def draw(self, game_state, surface: pygame.Surface):
-        surface.blit(self.img, [self.x, self.y])
+    def draw(self, game_state):
+        game_state.surface.blit(self.img, [self.x, self.y])
 
 
-class PipePair(DrawableEntity):
+class PipePair(GameEntity):
     """
     A Pair of Pipes in the game.
     Both need to be tracked so that it is known when the bird passes one pair of pipes.
@@ -335,11 +359,11 @@ class FloorTile(Rectangle):
     def __init__(self, x: int):
         super().__init__(x, const.FLOOR_Y, const.BASE_X, const.BASE_Y)
 
-    def draw(self, game_state, surface: pygame.Surface):
-        surface.blit(img_base, [self.x, self.y])
+    def draw(self, game_state):
+        game_state.surface.blit(img_base, [self.x, self.y])
 
 
-class Floor(DrawableEntity):
+class Floor(GameEntity):
     """
     A collection of floor sprites which scroll by.
     Like the pipe pair class, this will only update the x positions of the sprites
@@ -362,7 +386,7 @@ class Floor(DrawableEntity):
                 tile.x += const.BASE_X * len(self.tiles)
 
 
-class DistanceLine(DrawableEntity):
+class DistanceLine(GameEntity):
     # The distance to the closest point
     dist: float
     # The point we are closest to
@@ -384,8 +408,8 @@ class DistanceLine(DrawableEntity):
                     self.dist = dist_tuple[0]
                     self.point = dist_tuple[1]
 
-    def draw(self, game_state, surface: pygame.Surface):
-        pygame.draw.line(surface, (255, 0, 255), [self.x, self.y], self.point)
+    def draw(self, game_state):
+        pygame.draw.line(game_state.surface, (255, 0, 255), [self.x, self.y], self.point)
 
 
 class MouseLine(DistanceLine):
@@ -425,19 +449,18 @@ class BirdDistanceCheck(DistanceLine):
             game_state.bird.threat = self.dist
 
 
-class PipePassCounter(DrawableEntity):
+class PipePassCounter(GameEntity):
     """
     Show the number of pipes passed on the screen
     """
     def __init__(self, x, y):
         super().__init__(x, y)
 
-    def draw(self, game_state, surface: pygame.Surface):
+    def draw(self, game_state):
         """
         Draw the pipes passed to the screen
 
         :param game_state: the current game state to update from
-        :param surface: the surface to draw to
         :return: None
         """
         passed_str = str(game_state.pipes_passed)
@@ -446,25 +469,25 @@ class PipePassCounter(DrawableEntity):
             pos = [self.x + (index * const.NUM_X), self.y]
 
             if num == 0:
-                surface.blit(img_num_0, pos)
+                game_state.surface.blit(img_num_0, pos)
             elif num == 1:
-                surface.blit(img_num_1, pos)
+                game_state.surface.blit(img_num_1, pos)
             elif num == 2:
-                surface.blit(img_num_2, pos)
+                game_state.surface.blit(img_num_2, pos)
             elif num == 3:
-                surface.blit(img_num_3, pos)
+                game_state.surface.blit(img_num_3, pos)
             elif num == 4:
-                surface.blit(img_num_4, pos)
+                game_state.surface.blit(img_num_4, pos)
             elif num == 5:
-                surface.blit(img_num_5, pos)
+                game_state.surface.blit(img_num_5, pos)
             elif num == 6:
-                surface.blit(img_num_6, pos)
+                game_state.surface.blit(img_num_6, pos)
             elif num == 7:
-                surface.blit(img_num_7, pos)
+                game_state.surface.blit(img_num_7, pos)
             elif num == 8:
-                surface.blit(img_num_8, pos)
+                game_state.surface.blit(img_num_8, pos)
             elif num == 9:
-                surface.blit(img_num_9, pos)
+                game_state.surface.blit(img_num_9, pos)
 
 
 def add_pipe_pair(entity_list, pipe_list, x):
@@ -478,7 +501,7 @@ class GameState:
     """
     An organized structure of all entities in the game
     """
-    game: pygame.Surface
+    surface: pygame.Surface
     # Time change since the last frame was rendered
     delta: float
     # The frame of this game state
@@ -486,7 +509,7 @@ class GameState:
 
     birds: list[Bird]
     pipes_passed: int
-    entities: list[DrawableEntity]
+    entities: list[GameEntity]
     pipes: list[PipePair]
     floor: Floor
     background: pygame.Surface
@@ -529,7 +552,7 @@ class GameState:
         self.pipe_speed = const.INIT_SPEED
 
     def init_window(self):
-        self.game = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
+        self.surface = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
         self.bg_i = 0
 
         pygame.display.set_caption("Flappy Bird AI")
@@ -546,7 +569,7 @@ class GameState:
 
         if self.bg_i == -const.WIDTH:
             self.bg_i = 0
-            self.game.blit(self.background, (const.WIDTH + self.bg_i, 0))
+            self.surface.blit(self.background, (const.WIDTH + self.bg_i, 0))
         self.bg_i -= 1
 
         self.floor.update(self)
@@ -565,14 +588,14 @@ class GameState:
         Draw entities onto the window surface.
         :return: None
         """
-        self.game.blit(self.background, (self.bg_i, 0))
-        self.game.blit(self.background, (const.WIDTH + self.bg_i, 0))
+        self.surface.blit(self.background, (self.bg_i, 0))
+        self.surface.blit(self.background, (const.WIDTH + self.bg_i, 0))
 
         for entity in self.entities:
-            entity.draw(self, self.game)
+            entity.draw(self)
 
         for bird in self.birds:
-            bird.draw(self, self.game)
+            bird.draw(self)
 
     def do_event(self):
         for event in pygame.event.get():
