@@ -152,7 +152,7 @@ class GameEntity:
         self.x = x
         self.y = y
 
-    def update(self, game_state):
+    def update(self, game_state) -> None:
         """
         NAME:           GameEntity.update
         PARAMETERS:     game_state, the game state this entity is a part of
@@ -163,7 +163,7 @@ class GameEntity:
         # This is the default behavior, which is to not update since not every entity updates each frame
         pass
     
-    def draw(self, game_state):
+    def draw(self, game_state) -> None:
         """
         NAME:           GameEntity.draw
         PARAMETERS:     game_state, the game state this entity is a part of
@@ -207,7 +207,7 @@ class Rectangle(GameEntity):
         """
         return [self.x + (self.size_x / 2), self.y + (self.size_y / 2)]
 
-    def draw(self, game_state):
+    def draw(self, game_state) -> None:
         """
         NAME:           Rectangle.draw
         PARAMETERS:     game_state, the game state this entity is a part of
@@ -249,7 +249,7 @@ class Bird(Rectangle):
         self.threat = tuple()
         self.fitness = 0
 
-    def jump(self):
+    def jump(self) -> None:
         """
         NAME:           Bird.jump
         PURPOSE:        This method makes the bird jump from its current position regardless of current velocity.
@@ -258,7 +258,7 @@ class Bird(Rectangle):
         """
         self.velocity = const.JUMP_VELOCITY
 
-    def update(self, game_state):
+    def update(self, game_state) -> None:
         """
         NAME:           Bird.update
         PURPOSE:        This method performs checks and calculations each frame to detect if the bird has died,
@@ -301,7 +301,7 @@ class Bird(Rectangle):
         # Update Position
         self.y += self.velocity * game_state.delta
 
-    def draw(self, game_state):
+    def draw(self, game_state) -> None:
         """
         NAME:           Bird.draw
         PARAMETERS:     game_state, the game state this entity is a part of
@@ -339,7 +339,7 @@ class Pipe(Rectangle):
         else:
             self.img = img_pipe_bot
 
-    def draw(self, game_state):
+    def draw(self, game_state) -> None:
         """
         NAME:           Pipe.draw
         PARAMETERS:     game_state, the game state this entity is a part of
@@ -385,7 +385,7 @@ class PipePair(GameEntity):
         self.change_gap()
         self.passed = False
 
-    def change_gap(self):
+    def change_gap(self) -> None:
         """
         NAME:           PipePair.change_gap
         PARAMETERS:     None
@@ -405,7 +405,7 @@ class PipePair(GameEntity):
         self.top_pipe.y = pipe_loc - const.PIPE_Y
         self.bot_pipe.y = pipe_loc + gap
 
-    def update(self, game_state):
+    def update(self, game_state) -> None:
         """
         NAME:           PipePair.update
         PURPOSE:        This method updates the locations of the pipes to move them to the left for their update.
@@ -452,7 +452,7 @@ class FloorTile(Rectangle):
         """
         super().__init__(x, const.FLOOR_Y, const.BASE_X, const.BASE_Y)
 
-    def draw(self, game_state):
+    def draw(self, game_state) -> None:
         """
         NAME:           FloorTile.draw
         PARAMETERS:     game_state, the game state this entity is a part of
@@ -488,7 +488,7 @@ class Floor(GameEntity):
         for i in range(num_tiles):
             self.tiles.append(FloorTile(i * const.BASE_X))
 
-    def update(self, game_state):
+    def update(self, game_state) -> None:
         """
         NAME:           Floor.update
         PURPOSE:        This method updates the locations of the FloorTile's to move them to the left for their update.
@@ -531,7 +531,7 @@ class DistanceLine(GameEntity):
         # Initialize to an empty tuple, this will always be updated before a draw
         self.closest = tuple()
 
-    def update(self, game_state):
+    def update(self, game_state) -> None:
         """
         NAME:           DistanceLine.update
         PURPOSE:        This method updates the distance and closest surface location for the line to be drawn.
@@ -540,7 +540,7 @@ class DistanceLine(GameEntity):
         """
         self.closest = get_closest_point(self.start, game_state)
 
-    def draw(self, game_state):
+    def draw(self, game_state) -> None:
         """
         NAME:           DistanceLine.draw
         PARAMETERS:     game_state, the game state this entity is a part of
@@ -574,7 +574,7 @@ class MouseLine(DistanceLine):
         self.mouse_rect = Rectangle(0, 0, 1, 1)
         super().__init__(self.mouse_rect)
 
-    def update(self, game_state):
+    def update(self, game_state) -> None:
         """
         NAME:           MouseLine.update
         PURPOSE:        This method updates the distance and closest surface location for the line to be drawn.
@@ -607,7 +607,7 @@ class PipePassCounter(GameEntity):
         """
         super().__init__(x, y)
 
-    def draw(self, game_state):
+    def draw(self, game_state) -> None:
         """
         NAME:           PipePassCounter.draw
         PARAMETERS:     game_state, the game state this entity is a part of
@@ -642,7 +642,7 @@ class PipePassCounter(GameEntity):
                 game_state.surface.blit(img_num_9, pos)
 
 
-def add_pipe_pair(entity_list, pipe_pair_list, x):
+def add_pipe_pair(entity_list, pipe_pair_list, x) -> None:
     """
     NAME:           add_pipe_pair
     PARAMETERS:     entity_list, a list of entities related to a game_state for the pipes to be added to
@@ -737,7 +737,7 @@ class GameState:
 
         self.pipe_speed = const.INIT_SPEED
 
-    def init_window(self):
+    def init_window(self) -> None:
         """
         NAME:           GameState.init_window
         PARAMETERS:     None
@@ -751,7 +751,7 @@ class GameState:
         clock = pygame.time.Clock()
         clock.tick(const.FPS)
 
-    def do_update(self):
+    def do_update(self) -> None:
         """
         NAME:           GameState.do_update
         PARAMETERS:     None
@@ -783,7 +783,7 @@ class GameState:
         for bird in self.birds:
             bird.update(self)
 
-    def do_draw(self):
+    def do_draw(self) -> None:
         """
         NAME:           GameState.do_draw
         PARAMETERS:     None
@@ -803,7 +803,7 @@ class GameState:
         for bird in self.birds:
             bird.draw(self)
 
-    def do_event(self):
+    def do_event(self) -> None:
         """
         NAME:           GameState.do_event
         PARAMETERS:     None
