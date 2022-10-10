@@ -200,7 +200,7 @@ class Rectangle(GameEntity):
     def get_center_pos(self) -> list[float]:
         """
         NAME:           Rectangle.get_center_pos
-        PURPOSE:        This method calculates and returns the
+        PURPOSE:        This method calculates and returns the center coordinates of this entity
         PRECONDITION:   x, y, size_x, and size_y are not none and initialized
         POSTCONDITION:  This instance is not modified, and the coordinates for this entities center are returned
                         in a list consisting of the x and y position as float values
