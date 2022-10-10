@@ -177,26 +177,45 @@ class GameEntity:
 
 class Rectangle(GameEntity):
     """
-    A solid color rectangle.
-    The x/y position is the top left of the rectangle
+    NAME:           Rectangle
+    PURPOSE:        A game entity with a rectangular shape.
+    INVARIANTS:     size_x and size_y must be greater than 0, not None, and initialized.
     """
     size_x: float
     size_y: float
 
     def __init__(self, x, y, size_x, size_y):
+        """
+        NAME:           Rectangle.__init__
+        PARAMETERS:     x and y coordinates of the location of this entity
+                        size_x and size_y are the width and height of this entity
+        PURPOSE:        This method initializes fields for a new Rectangle instance.
+        PRECONDITION:   all parameters are not none and are initialized.
+        POSTCONDITION:  This instance's fields are initialized to the provided parameters.
+        """
         super().__init__(x, y)
         self.size_x = size_x
         self.size_y = size_y
 
-    def get_center_pos(self):
+    def get_center_pos(self) -> list[float]:
         """
-        Get the center position of this sprite
-        This is calculated by adding half of the size to the top left coordinate
-        :return: a 2 entry list of the x and y positions respectively
+        NAME:           Rectangle.get_center_pos
+        PURPOSE:        This method calculates and returns the
+        PRECONDITION:   x, y, size_x, and size_y are not none and initialized
+        POSTCONDITION:  This instance is not modified, and the coordinates for this entities center are returned
+                        in a list consisting of the x and y position as float values
         """
         return [self.x + (self.size_x / 2), self.y + (self.size_y / 2)]
 
     def draw(self, game_state):
+        """
+        NAME:           Rectangle.draw
+        PARAMETERS:     game_state, the game state this entity is a part of
+        PURPOSE:        This method draws a red rectangle to the surface that will be used for the next frame.
+        PRECONDITION:   This instance is a part of the provided game state,
+        POSTCONDITION:  The surface of game_state will have this entity drawn onto it
+        """
+        # Draw a red rectangle for simple functionality
         pygame.draw.rect(game_state.surface, (255, 0, 0), pygame.Rect(self.x, self.y, self.size_x, self.size_y))
 
 
