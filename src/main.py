@@ -435,25 +435,50 @@ class PipePair(GameEntity):
 
 class FloorTile(Rectangle):
     """
-    A single floor tile which is repeated across the bottom of the screen.
-    This is updated by the Floor class.
+    NAME:           FloorTile
+    PURPOSE:        A game entity representing a floor section that will kill the bird on contact.
+    INVARIANTS:     x must not be None and initialized
     """
 
     def __init__(self, x: int):
+        """
+        NAME:           FloorTile.__init__
+        PARAMETERS:     x, the location of the left side of this tile
+        PURPOSE:        This method initializes fields for a new FloorTile instance.
+        PRECONDITION:   all parameters are not none and are initialized.
+        POSTCONDITION:  This instance's fields are initialized to the provided parameters.
+        """
         super().__init__(x, const.FLOOR_Y, const.BASE_X, const.BASE_Y)
 
     def draw(self, game_state):
+        """
+        NAME:           FloorTile.draw
+        PARAMETERS:     game_state, the game state this entity is a part of
+        PURPOSE:        This method draws a floor image at the location of this entity to the game surface.
+        PRECONDITION:   This instance is a part of the provided game state.
+        POSTCONDITION:  The surface of game_state will have this entity drawn onto it
+        """
         game_state.surface.blit(img_base, [self.x, self.y])
 
 
 class Floor(GameEntity):
     """
-    A collection of floor sprites which scroll by.
-    Like the pipe pair class, this will only update the x positions of the sprites
+    NAME:           FloorTile
+    PURPOSE:        A game entity representing a floor section that will kill the bird on contact.
+    INVARIANTS:     x must not be None and initialized
     """
+    # A list of all floor tiles used to render the floor
     tiles: list[FloorTile]
 
     def __init__(self):
+        """
+        NAME:           FloorTile.__init__
+        PARAMETERS:     None
+        PURPOSE:        This method initializes fields for a new Floor instance and creates
+                        the needed FloorTile instances.
+        PRECONDITION:   the img_base global variable is set
+        POSTCONDITION:  This instance's fields are initialized to the provided parameters.
+        """
         super().__init__(0, 0)
         self.tiles = list()
 
@@ -462,6 +487,15 @@ class Floor(GameEntity):
             self.tiles.append(FloorTile(i * const.BASE_X))
 
     def update(self, game_state):
+        """
+        NAME:           Floor.update
+        PURPOSE:        This method updates the locations of the FloorTile's to move them to the left for their update.
+                        If a tile is off-screen to the left of the bird then it is moved
+                        to the right side of the screen.
+        PRECONDITION:   None, this can be called at any time. But only one instance should exist.
+        POSTCONDITION:  The location of the FloorTiles in this instance have been updated.
+                        The tiles are moved to the right side of the screen if they have moved off-screen.
+        """
         for tile in self.tiles:
             tile.x -= game_state.pipe_speed * game_state.delta
             # If the tile is off the screen then move it back to the right
