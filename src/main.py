@@ -129,7 +129,7 @@ def get_closest_point(rectangle, game_state) -> tuple[float, list[float]]:
 
 class GameEntity:
     """
-    NAME:           DrawableEntity
+    NAME:           GameEntity
     PURPOSE:        A super class for all game entities which need to be updated or drawn to the screen
                     x and y coordinate, and update/draw methods to be called each frame.
     INVARIANTS:     x and y can be any positive or negative float value. x and y are not always the top left coordinate
@@ -143,7 +143,7 @@ class GameEntity:
     
     def __init__(self, x, y):
         """
-        NAME:           DrawableEntity.__init__
+        NAME:           GameEntity.__init__
         PARAMETERS:     x and y coordinates of the location of this entity
         PURPOSE:        This method initializes fields for a new DrawableEntity instance.
         PRECONDITION:   x and y are not none and are initialized.
@@ -154,7 +154,7 @@ class GameEntity:
 
     def update(self, game_state):
         """
-        NAME:           DrawableEntity.update
+        NAME:           GameEntity.update
         PARAMETERS:     game_state, the game state this entity is a part of
         PURPOSE:        This method updates the properties of this instance to be rendered on the next frame.
         PRECONDITION:   This instance is a part of the provided game state
@@ -165,7 +165,7 @@ class GameEntity:
     
     def draw(self, game_state):
         """
-        NAME:           DrawableEntity.draw
+        NAME:           GameEntity.draw
         PARAMETERS:     game_state, the game state this entity is a part of
         PURPOSE:        This method draws this entity to the surface that will be used for the next frame.
         PRECONDITION:   This instance is a part of the provided game state,
