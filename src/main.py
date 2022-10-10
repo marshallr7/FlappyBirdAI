@@ -235,15 +235,15 @@ class Bird(Rectangle):
     # The fitness of this bird within a generation
     fitness: float
 
-    def __init__(self, x, y):
+    def __init__(self, y):
         """
         NAME:           Bird.__init__
-        PARAMETERS:     x and y coordinates of the top left corner of this entity
+        PARAMETERS:     y coordinate of the top left corner of this entity
         PURPOSE:        This method initializes fields for a new Bird instance.
         PRECONDITION:   all parameters are not none and are initialized.
         POSTCONDITION:  This instance's fields are initialized to the provided parameters.
         """
-        super().__init__(x, y, const.BIRD_X, const.BIRD_Y)
+        super().__init__(const.BIRD_POS_X, y, const.BIRD_X, const.BIRD_Y)
         self.velocity = 0
         self.dead = False
         self.threat = 0
@@ -418,8 +418,8 @@ class PipePair(GameEntity):
         """
         self.x -= game_state.pipe_speed * game_state.delta
 
-        # # Pipes have passed the bird, increment the pipe counter
-        if self.x + const.PIPE_X < game_state.bird.x and not self.passed:
+        # Pipes have passed the bird, increment the pipe counter
+        if self.x + const.PIPE_X < const.BIRD_POS_X and not self.passed:
             self.passed = True
             game_state.pipes_passed += 1
 
@@ -847,7 +847,7 @@ def eval_genomes(genomes, config):
         network = neat.nn.FeedForwardNetwork.create(genome, config)
         nn_networks.append(network)
         # Create a bird for the Genome/Network
-        nn_birds.append(Bird(50, const.HEIGHT / 2))
+        nn_birds.append(Bird(const.HEIGHT / 2))
         nn_genomes.append(genome)
 
     # Setup Game State
