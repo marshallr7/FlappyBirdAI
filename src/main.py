@@ -592,17 +592,28 @@ class MouseLine(DistanceLine):
 
 class PipePassCounter(GameEntity):
     """
-    Show the number of pipes passed on the screen
+    NAME:           PipePassCounter
+    PURPOSE:        A game entity which displays the number of pipes passed in the game.
+    INVARIANTS:     The number of pipes passed is greater than or equal to zero.
     """
+
     def __init__(self, x, y):
+        """
+        NAME:           PipePassCounter.__init__
+        PARAMETERS:     x and y are the coordinates of the top left location of where the numbers should appear
+        PURPOSE:        This method initializes fields for a new PipePassCounter instance
+        PRECONDITION:   There are no other instances of this class present
+        POSTCONDITION:  This instance's fields are initialized to the provided parameters.
+        """
         super().__init__(x, y)
 
     def draw(self, game_state):
         """
-        Draw the pipes passed to the screen
-
-        :param game_state: the current game state to update from
-        :return: None
+        NAME:           PipePassCounter.draw
+        PARAMETERS:     game_state, the game state this entity is a part of
+        PURPOSE:        This method draws the numbers representing the value of game_state.pipes_passed
+        PRECONDITION:   The number of pipes passed is greater than or equal to zero.
+        POSTCONDITION:  The surface of game_state will have multiple numbers drawn onto it
         """
         passed_str = str(game_state.pipes_passed)
         for index in range(len(passed_str)):
@@ -632,6 +643,16 @@ class PipePassCounter(GameEntity):
 
 
 def add_pipe_pair(entity_list, pipe_list, x):
+    """
+    NAME:           add_pipe_pair
+    PARAMETERS:     entity_list, a list of entities related to a game_state for the pipes to be added to
+                    pipe_list, a list of pipe pairs to add a new pipe pair instance to
+                    x, the x position to create the new pipes at
+    PURPOSE:        This method creates a new pipe pair instance and adds the pipes to the provided entity list,
+                    and adds the PipePair to the provided pipe list.
+    PRECONDITION:   The parameters are initialized.
+    POSTCONDITION:  The lists will have new entities appended to them
+    """
     new_pair = PipePair(x)
     entity_list.append(new_pair.top_pipe)
     entity_list.append(new_pair.bot_pipe)
