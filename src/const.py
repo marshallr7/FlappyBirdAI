@@ -22,7 +22,7 @@ BIRD_DEATH = BIRD_Y / 2
 BIRD_POS_X = 50
 # Pipe Speed/Increase
 INIT_SPEED = 100
-GAIN_SPEED = 1
+GAIN_SPEED = 5
 # Pipe gap Min/Max distance from screen bounds
 PIPE_TOP = 25
 PIPE_BOT = 75
