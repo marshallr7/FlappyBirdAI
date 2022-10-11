@@ -22,8 +22,6 @@ BIRD_DEATH = BIRD_Y / 2
 BIRD_POS_X = 50
 # Pipe Speed/Increase
 INIT_SPEED = 100
-GAIN_SPEED = 5
-# Pipe gap Min/Max distance from screen bounds
 PIPE_TOP = 25
 PIPE_BOT = 75
 # Size Bounds for pipe gap size
@@ -39,6 +37,6 @@ BIRD_MAX_Y = FLOOR_Y
 # Bird Physics
 # Remember that y=0 is the top of the screen
 GRAVITY = 1600
-JUMP_VELOCITY = -200
+JUMP_VELOCITY = -300
 MAX_VELOCITY = GRAVITY * 30
 MIN_VELOCITY = GRAVITY * -50
