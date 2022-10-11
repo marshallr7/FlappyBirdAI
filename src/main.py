@@ -692,15 +692,17 @@ class GameState:
     # How fast the pipes are moving each frame
     pipe_speed: int
 
-    def __init__(self, debug_entities: bool, birds: list[Bird]):
+    def __init__(self, debug_entities: bool, surface: pygame.Surface, birds: list[Bird]):
         """
         NAME:           GameState.__init__
         PARAMETERS:     debug, if lines should be drawn from each bird and the mouse to the nearest threat
+                        surface, the surface of the active window to draw entities to
                         birds, a list of created birds to render and update
         PURPOSE:        This method initializes fields for a new PipePassCounter instance
         PRECONDITION:   There are no other instances of this class present
         POSTCONDITION:  This instance's fields are initialized to the provided parameters.
         """
+        self.surface = surface
         self.delta = 0
 
         self.birds = birds
@@ -736,20 +738,6 @@ class GameState:
         self.bg_i = 0
 
         self.pipe_speed = const.INIT_SPEED
-
-    def init_window(self) -> None:
-        """
-        NAME:           GameState.init_window
-        PARAMETERS:     None
-        PURPOSE:        This method initializes the pygame window and sets the frame rate.
-        PRECONDITION:   The window hasn't been initialized before.
-        POSTCONDITION:  The window is initialized and this instance is ready to update it each frame.
-        """
-        self.surface = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
-
-        pygame.display.set_caption("Flappy Bird AI")
-        clock = pygame.time.Clock()
-        clock.tick(const.FPS)
 
     def do_update(self) -> None:
         """
@@ -818,6 +806,8 @@ class GameState:
 
 # The generation of neural networks in the NEAT algorithm.
 generation = 0
+# The window surface for each game to draw to
+surface: pygame.Surface
 
 
 def eval_genomes(genomes: list[neat.genome.DefaultGenome], neat_config: neat.config.Config):
@@ -851,8 +841,7 @@ def eval_genomes(genomes: list[neat.genome.DefaultGenome], neat_config: neat.con
         nn_genomes.append(genome)
 
     # Setup Game State
-    game_state = GameState(debug, nn_birds)
-    game_state.init_window()
+    game_state = GameState(debug, surface, nn_birds)
 
     clock = pygame.time.Clock()
     # The last time a frame was rendered, used to calculate frame time
@@ -949,6 +938,10 @@ if __name__ == "__main__":
     population.add_reporter(neat.StdOutReporter(True))
     stats = neat.StatisticsReporter()
     population.add_reporter(stats)
+
+    # Set up the window to draw to
+    surface = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
+    pygame.display.set_caption("Flappy Bird AI")
 
     # Run NEAT on our population and determine the best genome
     winner = population.run(eval_genomes, 50)
