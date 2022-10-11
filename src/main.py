@@ -6,6 +6,7 @@ FOR:              CS 3368 Introduction to Artificial Intelligence Section 001
 """
 
 import math
+import os.path
 import random
 import sys
 import time
@@ -919,8 +920,15 @@ if __name__ == "__main__":
     PRECONDITION:   None, this is the first thing executed in the program.
     POSTCONDITION:  The neural network has been trained.
     """
+    # Parse config file location or use default
+    config_path = "../config.txt"
+    if len(sys.argv) > 1:
+        config_path = str(sys.argv[1])
+        if not os.path.exists(config_path):
+            print(f"No config file found at the provided path '{config_path}'! Please check that the file exists.")
+            exit(1)
     # Parse arguments for if we want debugging features
-    debug = bool(sys.argv[1]) if (len(sys.argv) > 1) else False
+    debug = bool(sys.argv[2]) if (len(sys.argv) > 2) else False
 
     # Load the NEAT configuration
     config = neat.config.Config(
@@ -928,7 +936,7 @@ if __name__ == "__main__":
         neat.DefaultReproduction,
         neat.DefaultSpeciesSet,
         neat.DefaultStagnation,
-        "config.txt"
+        config_path
     )
 
     # Create a population for out birds
