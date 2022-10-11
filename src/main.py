@@ -14,9 +14,8 @@ import neat
 import pygame
 import const
 
-
-img_pipe_bot = pygame.image.load("../assets/pipe.png")
-img_pipe_top = pygame.transform.flip(img_pipe_bot, False, True)
+img_pipe_bottom = pygame.image.load("../assets/pipe.png")
+img_pipe_top = pygame.transform.flip(img_pipe_bottom, False, True)
 img_bird = pygame.image.load("../assets/bird1.png")
 img_background = pygame.image.load("../assets/bg.png")
 img_background = pygame.transform.scale(img_background, (const.WIDTH, const.HEIGHT))
@@ -32,6 +31,10 @@ img_num_6 = pygame.image.load("../assets/numbers/6.png")
 img_num_7 = pygame.image.load("../assets/numbers/7.png")
 img_num_8 = pygame.image.load("../assets/numbers/8.png")
 img_num_9 = pygame.image.load("../assets/numbers/9.png")
+
+# List of images used to update score
+img_dict = {0: img_num_0, 1: img_num_1, 2: img_num_2, 3: img_num_3, 4: img_num_4, 5: img_num_5, 6: img_num_6,
+            7: img_num_7, 8: img_num_8, 9: img_num_9}
 
 
 def dist_to_rect_side(rectangle_1: "Rectangle", rectangle_2: "Rectangle") -> tuple[float, list[float]]:
@@ -140,7 +143,7 @@ class GameEntity:
     # But for the most part, rectangle is used
     x: float
     y: float
-    
+
     def __init__(self, x, y):
         """
         NAME:           GameEntity.__init__
@@ -162,7 +165,7 @@ class GameEntity:
         """
         # This is the default behavior, which is to not update since not every entity updates each frame
         pass
-    
+
     def draw(self, game_state: "GameState") -> None:
         """
         NAME:           GameEntity.draw
@@ -337,7 +340,7 @@ class Pipe(Rectangle):
         if top:
             self.img = img_pipe_top
         else:
-            self.img = img_pipe_bot
+            self.img = img_pipe_bottom
 
     def draw(self, game_state: "GameState") -> None:
         """
@@ -606,6 +609,7 @@ class PipePassCounter(GameEntity):
         POSTCONDITION:  This instance's fields are initialized to the provided parameters.
         """
         super().__init__(x, y)
+        self.game_score: int = 0
 
     def draw(self, game_state: "GameState") -> None:
         """
@@ -620,26 +624,7 @@ class PipePassCounter(GameEntity):
             num = int(passed_str[index])
             pos = [self.x + (index * const.NUM_X), self.y]
 
-            if num == 0:
-                game_state.surface.blit(img_num_0, pos)
-            elif num == 1:
-                game_state.surface.blit(img_num_1, pos)
-            elif num == 2:
-                game_state.surface.blit(img_num_2, pos)
-            elif num == 3:
-                game_state.surface.blit(img_num_3, pos)
-            elif num == 4:
-                game_state.surface.blit(img_num_4, pos)
-            elif num == 5:
-                game_state.surface.blit(img_num_5, pos)
-            elif num == 6:
-                game_state.surface.blit(img_num_6, pos)
-            elif num == 7:
-                game_state.surface.blit(img_num_7, pos)
-            elif num == 8:
-                game_state.surface.blit(img_num_8, pos)
-            elif num == 9:
-                game_state.surface.blit(img_num_9, pos)
+            game_state.surface.blit(img_dict[num], pos)
 
 
 def add_pipe_pair(entity_list: list[GameEntity], pipe_pair_list: list[PipePair], x: float) -> None:
@@ -747,9 +732,6 @@ class GameState:
         PRECONDITION:   The previous frame has been drawn, and the delta has been updated with the previous frame time.
         POSTCONDITION:  All entities have been updated and are ready to be drawn to the next frame.
         """
-        # Increase the pipe speed
-        self.pipe_speed += const.GAIN_SPEED * self.delta
-
         # Update the background
         if self.bg_i == -const.WIDTH:
             self.bg_i = 0
@@ -791,7 +773,8 @@ class GameState:
         for bird in self.birds:
             bird.draw(self)
 
-    def do_event(self) -> None:
+    @staticmethod
+    def do_event() -> None:
         """
         NAME:           GameState.do_event
         PARAMETERS:     None
@@ -847,8 +830,7 @@ def eval_genomes(genomes: list[neat.genome.DefaultGenome], neat_config: neat.con
     # The last time a frame was rendered, used to calculate frame time
     last_frame = time.time()
 
-    running = True
-    while running and len(nn_birds) > 0:
+    while len(nn_birds) > 0:
         # Limit the frame rate, this needs to be called every frame
         clock.tick(const.FPS)
 
@@ -892,7 +874,7 @@ def eval_genomes(genomes: list[neat.genome.DefaultGenome], neat_config: neat.con
             # If the output is high, then jump
             if output[0] > 0:
                 bird.jump()
-        
+
         # Check for dead birds and remove them
         for bird in game_state.birds:
             if bird.dead:
