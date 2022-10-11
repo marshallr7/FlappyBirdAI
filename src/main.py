@@ -877,7 +877,7 @@ def eval_genomes(genomes: list[neat.genome.DefaultGenome], neat_config: neat.con
         # Get the next pipe pair the bird can collide with
         closest_pair = game_state.pipes[0]
         for pipe_pair in game_state.pipes:
-            if const.BIRD_POS_X < pipe_pair.x < closest_pair.x:
+            if const.BIRD_POS_X - const.PIPE_X < pipe_pair.x < closest_pair.x:
                 closest_pair = pipe_pair
 
         # Get the bounds of the pipes where the bird can be safe
@@ -896,14 +896,12 @@ def eval_genomes(genomes: list[neat.genome.DefaultGenome], neat_config: neat.con
             # Measure the single output of the network according to various properties about the bird's current state
             # Inputs:
             # 1: Bird Y Position
-            # 2: Bird Threat Distance
-            # 3: Bird Y Thread Position
-            # 4: Bottom of next Top Pipe
-            # 5: Top of next Bottom Pipe
-            output = nn_networks[nn_birds.index(bird)].activate((bird.y, bird.threat[0], bird.threat[1][1], top_y, bot_y))
+            # 2: Bottom of next Top Pipe
+            # 3: Top of next Bottom Pipe
+            output = nn_networks[nn_birds.index(bird)].activate((bird.y, top_y, bot_y))
 
             # If the output is high, then jump
-            if output[0] > 0.2:
+            if output[0] > 0:
                 bird.jump()
         
         # Check for dead birds and remove them
