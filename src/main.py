@@ -733,7 +733,6 @@ class GameState:
         # Update the background
         if self.bg_i == -const.WIDTH:
             self.bg_i = 0
-            self.surface.blit(self.background, (const.WIDTH + self.bg_i, 0))
         self.bg_i -= 1
 
         # Update the floor
