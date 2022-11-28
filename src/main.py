@@ -661,8 +661,6 @@ class GameState:
                     Delta and pipes_passed are always positive.
                     Delta cannot be zero.
     """
-    # The drawing surface we draw our entities to for each frame
-    surface: pygame.Surface
     # Time change since the last frame was rendered
     delta: float
 
@@ -676,8 +674,6 @@ class GameState:
     pipes: list[PipePair]
     # The floor instance
     floor: Floor
-    # The background images
-    background: pygame.Surface
     # The x location of the background images
     bg_i: int
 
@@ -723,7 +719,6 @@ class GameState:
             self.entities.append(DistanceLine(self.bird))
 
         # Set up the background
-        self.background = img_background
         self.bg_i = 0
 
         self.pipe_speed = const.INIT_SPEED
@@ -764,8 +759,8 @@ class GameState:
         POSTCONDITION:  All entities are drawn to the next frame.
         """
         # Draw the background
-        surface.blit(self.background, (self.bg_i, 0))
-        surface.blit(self.background, (const.WIDTH + self.bg_i, 0))
+        surface.blit(img_background, (self.bg_i, 0))
+        surface.blit(img_background, (const.WIDTH + self.bg_i, 0))
 
         # Draw each entity
         for entity in self.entities:
