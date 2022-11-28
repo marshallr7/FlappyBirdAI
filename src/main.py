@@ -796,7 +796,7 @@ if __name__ == "__main__":
     window_surface = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
     pygame.display.set_caption("Flappy Bird AI")
 
-    game_state: GameState
+    current_game_state: GameState
 
     clock = pygame.time.Clock()
     # The last time a frame was rendered, used to calculate frame time
@@ -804,10 +804,10 @@ if __name__ == "__main__":
 
     while True:
         # Create a new game state
-        game_state = GameState(debug)
+        current_game_state = GameState(debug)
 
         # Execute game state logic forever
-        while not game_state.bird.dead:
+        while not current_game_state.bird.dead:
             # Limit the frame rate, this needs to be called every frame
             clock.tick(const.FPS)
 
@@ -815,14 +815,14 @@ if __name__ == "__main__":
             # pygame.clock.get_fps() averages the last 10 frames
             # pygame.clock.get_time() returns an int in ms, no decimal. 16 instead if 16.6777
             next_frame = time.time()
-            game_state.delta = next_frame - last_frame
+            current_game_state.delta = next_frame - last_frame
             last_frame = next_frame
 
             # Update the game state
-            game_state.do_event()
-            game_state.do_update()
+            current_game_state.do_event()
+            current_game_state.do_update()
 
             # Draw the next frame
-            game_state.do_draw(window_surface)
+            current_game_state.do_draw(window_surface)
             # Display the next frame
             pygame.display.update()
