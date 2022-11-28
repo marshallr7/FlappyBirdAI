@@ -158,6 +158,7 @@ class GameEntity:
         """
         NAME:           GameEntity.update
         PARAMETERS:     game_state, the game state this entity is a part of
+                        surface, the window surface to draw to
         PURPOSE:        This method updates the properties of this instance to be rendered on the next frame.
         PRECONDITION:   This instance is a part of the provided game state
         POSTCONDITION:  This instance is updated and ready to be rendered on the next frame.
@@ -165,10 +166,11 @@ class GameEntity:
         # This is the default behavior, which is to not update since not every entity updates each frame
         pass
 
-    def draw(self, game_state: "GameState") -> None:
+    def draw(self, game_state: "GameState", surface: pygame.Surface) -> None:
         """
         NAME:           GameEntity.draw
         PARAMETERS:     game_state, the game state this entity is a part of
+                        surface, the window surface to draw to
         PURPOSE:        This method draws this entity to the surface that will be used for the next frame.
         PRECONDITION:   This instance is a part of the provided game state,
         POSTCONDITION:  The surface of game_state will have this entity drawn onto it
@@ -209,16 +211,18 @@ class Rectangle(GameEntity):
         """
         return [self.x + (self.size_x / 2), self.y + (self.size_y / 2)]
 
-    def draw(self, game_state: "GameState") -> None:
+    def draw(self, game_state: "GameState", surface: pygame.Surface) -> None:
         """
         NAME:           Rectangle.draw
         PARAMETERS:     game_state, the game state this entity is a part of
+                        surface, the window surface to draw to
+                        surface, the window surface to draw to
         PURPOSE:        This method draws a red rectangle to the surface that will be used for the next frame.
         PRECONDITION:   This instance is a part of the provided game state,
         POSTCONDITION:  The surface of game_state will have this entity drawn onto it
         """
         # Draw a red rectangle for simple functionality
-        pygame.draw.rect(game_state.surface, (255, 0, 0), pygame.Rect(self.x, self.y, self.size_x, self.size_y))
+        pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.x, self.y, self.size_x, self.size_y))
 
 
 class Bird(Rectangle):
@@ -303,15 +307,16 @@ class Bird(Rectangle):
         # Update Position
         self.y += self.velocity * game_state.delta
 
-    def draw(self, game_state: "GameState") -> None:
+    def draw(self, game_state: "GameState", surface: pygame.Surface) -> None:
         """
         NAME:           Bird.draw
         PARAMETERS:     game_state, the game state this entity is a part of
+                        surface, the window surface to draw to
         PURPOSE:        This method draws a bird to the surface that will be used for the next frame.
         PRECONDITION:   This instance is a part of the provided game state,
         POSTCONDITION:  The surface of game_state will have this entity drawn onto it
         """
-        game_state.surface.blit(img_bird, (self.x, self.y))
+        surface.blit(img_bird, (self.x, self.y))
 
 
 class Pipe(Rectangle):
@@ -341,15 +346,17 @@ class Pipe(Rectangle):
         else:
             self.img = img_pipe_bottom
 
-    def draw(self, game_state: "GameState") -> None:
+    def draw(self, game_state: "GameState", surface: pygame.Surface) -> None:
         """
         NAME:           Pipe.draw
         PARAMETERS:     game_state, the game state this entity is a part of
+                        surface, the window surface to draw to
+                        surface, the window surface to draw to
         PURPOSE:        This method draws the respective pipe image to the surface that will be used for the next frame.
         PRECONDITION:   This instance is a part of the provided game state,
         POSTCONDITION:  The surface of game_state will have this entity drawn onto it
         """
-        game_state.surface.blit(self.img, [self.x, self.y])
+        surface.blit(self.img, [self.x, self.y])
 
 
 class PipePair(GameEntity):
@@ -454,15 +461,16 @@ class FloorTile(Rectangle):
         """
         super().__init__(x, const.FLOOR_Y, const.BASE_X, const.BASE_Y)
 
-    def draw(self, game_state: "GameState") -> None:
+    def draw(self, game_state: "GameState", surface: pygame.Surface) -> None:
         """
         NAME:           FloorTile.draw
         PARAMETERS:     game_state, the game state this entity is a part of
+                        surface, the window surface to draw to
         PURPOSE:        This method draws a floor image at the location of this entity to the game surface.
         PRECONDITION:   This instance is a part of the provided game state.
         POSTCONDITION:  The surface of game_state will have this entity drawn onto it
         """
-        game_state.surface.blit(img_base, [self.x, self.y])
+        surface.blit(img_base, [self.x, self.y])
 
 
 class Floor(GameEntity):
@@ -542,16 +550,17 @@ class DistanceLine(GameEntity):
         """
         self.closest = get_closest_point(self.start, game_state)
 
-    def draw(self, game_state: "GameState") -> None:
+    def draw(self, game_state: "GameState", surface: pygame.Surface) -> None:
         """
         NAME:           DistanceLine.draw
         PARAMETERS:     game_state, the game state this entity is a part of
+                        surface, the window surface to draw to
         PURPOSE:        This method draws a line from this instances start and to the closest point.
         PRECONDITION:   This instance is a part of the provided game state.
         POSTCONDITION:  The surface of game_state will have this entity drawn onto it
         """
         # The line will be pink
-        pygame.draw.line(game_state.surface, (255, 0, 255), [self.x, self.y], self.closest[1])
+        pygame.draw.line(surface, (255, 0, 255), [self.x, self.y], self.closest[1])
 
 
 class MouseLine(DistanceLine):
@@ -610,10 +619,11 @@ class PipePassCounter(GameEntity):
         super().__init__(x, y)
         self.game_score: int = 0
 
-    def draw(self, game_state: "GameState") -> None:
+    def draw(self, game_state: "GameState", surface: pygame.Surface) -> None:
         """
         NAME:           PipePassCounter.draw
         PARAMETERS:     game_state, the game state this entity is a part of
+                        surface, the window surface to draw to
         PURPOSE:        This method draws the numbers representing the value of game_state.pipes_passed
         PRECONDITION:   The number of pipes passed is greater than or equal to zero.
         POSTCONDITION:  The surface of game_state will have multiple numbers drawn onto it
@@ -623,7 +633,7 @@ class PipePassCounter(GameEntity):
             num = int(passed_str[index])
             pos = [self.x + (index * const.NUM_X), self.y]
 
-            game_state.surface.blit(img_dict[num], pos)
+            surface.blit(img_dict[num], pos)
 
 
 def add_pipe_pair(entity_list: list[GameEntity], pipe_pair_list: list[PipePair], x: float) -> None:
@@ -676,16 +686,14 @@ class GameState:
     # How fast the pipes are moving each frame
     pipe_speed: int
 
-    def __init__(self, debug_entities: bool, surface: pygame.Surface):
+    def __init__(self, debug_entities: bool):
         """
         NAME:           GameState.__init__
         PARAMETERS:     debug, if lines should be drawn from each bird and the mouse to the nearest threat
-                        surface, the surface of the active window to draw entities to
         PURPOSE:        This method initializes fields for a new PipePassCounter instance
         PRECONDITION:   There are no other instances of this class present
         POSTCONDITION:  This instance's fields are initialized to the provided parameters.
         """
-        self.surface = surface
         self.delta = 0
 
         self.bird = Bird(const.BIRD_Y)
@@ -749,24 +757,24 @@ class GameState:
         # Update the bird
         self.bird.update(self)
 
-    def do_draw(self) -> None:
+    def do_draw(self, surface: pygame.Surface) -> None:
         """
         NAME:           GameState.do_draw
-        PARAMETERS:     None
+        PARAMETERS:     surface, the surface of the window to draw to
         PURPOSE:        This method draws all game entities to the next frame
         PRECONDITION:   All entities have been updated for the frame we're about to draw.
         POSTCONDITION:  All entities are drawn to the next frame.
         """
         # Draw the background
-        self.surface.blit(self.background, (self.bg_i, 0))
-        self.surface.blit(self.background, (const.WIDTH + self.bg_i, 0))
+        surface.blit(self.background, (self.bg_i, 0))
+        surface.blit(self.background, (const.WIDTH + self.bg_i, 0))
 
         # Draw each entity
         for entity in self.entities:
-            entity.draw(self)
+            entity.draw(self, surface)
 
         # Always draw the bird on top
-        self.bird.draw(self)
+        self.bird.draw(self, surface)
 
     @staticmethod
     def do_event() -> None:
@@ -798,7 +806,7 @@ if __name__ == "__main__":
 
     while True:
         # Create a new game state
-        game_state = GameState(debug, window_surface)
+        game_state = GameState(debug)
 
         # Execute game state logic forever
         while not game_state.bird.dead:
@@ -817,6 +825,6 @@ if __name__ == "__main__":
             game_state.do_update()
 
             # Draw the next frame
-            game_state.do_draw()
+            game_state.do_draw(window_surface)
             # Display the next frame
             pygame.display.update()
