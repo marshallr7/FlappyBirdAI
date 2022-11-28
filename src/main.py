@@ -216,7 +216,6 @@ class Rectangle(GameEntity):
         NAME:           Rectangle.draw
         PARAMETERS:     game_state, the game state this entity is a part of
                         surface, the window surface to draw to
-                        surface, the window surface to draw to
         PURPOSE:        This method draws a red rectangle to the surface that will be used for the next frame.
         PRECONDITION:   This instance is a part of the provided game state,
         POSTCONDITION:  The surface of game_state will have this entity drawn onto it
@@ -350,7 +349,6 @@ class Pipe(Rectangle):
         """
         NAME:           Pipe.draw
         PARAMETERS:     game_state, the game state this entity is a part of
-                        surface, the window surface to draw to
                         surface, the window surface to draw to
         PURPOSE:        This method draws the respective pipe image to the surface that will be used for the next frame.
         PRECONDITION:   This instance is a part of the provided game state,
