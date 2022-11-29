@@ -8,6 +8,7 @@ FOR:              CS 3368 Introduction to Artificial Intelligence Section 001
 import math
 import random
 import sys
+import copy
 import time
 
 import pygame
@@ -34,6 +35,15 @@ img_num_9 = pygame.image.load("../assets/numbers/9.png")
 # List of images used to update score
 img_dict = {0: img_num_0, 1: img_num_1, 2: img_num_2, 3: img_num_3, 4: img_num_4, 5: img_num_5, 6: img_num_6,
             7: img_num_7, 8: img_num_8, 9: img_num_9}
+
+# Dictionary of entity types and their surfaces to draw
+surface_dict = {
+    'rectangle': None,  # Rectangle draws a primitive shape, doesn't have a surface
+    'pipe_top': img_pipe_top,
+    'pipe_bottom': img_pipe_bottom,
+    'bird': img_bird,
+    'base': img_base
+}
 
 
 def dist_to_rect_side(rectangle_1: "Rectangle", rectangle_2: "Rectangle") -> tuple[float, list[float]]:
@@ -173,13 +183,50 @@ class GameEntity:
                         surface, the window surface to draw to
         PURPOSE:        This method draws this entity to the surface that will be used for the next frame.
         PRECONDITION:   This instance is a part of the provided game state,
-        POSTCONDITION:  The surface of game_state will have this entity drawn onto it
+        POSTCONDITION:  The surface will have this entity drawn onto it
         """
         # Error, this should be implemented for drawn entities, or not called if the entity doesn't draw itself
         assert False
 
 
-class Rectangle(GameEntity):
+class PositionEntity(GameEntity):
+    """
+    NAME:           PositionEntity
+    PURPOSE:        An abstract class which has no references to objects that cannot be deep-copied.
+                    Removing such references is required for deep-copy to work, but also optimizes memory usage.
+                    Provides default behavior to render the specified entity_type at the provided location
+    INVARIANTS:     x and y must be greater than zero
+                    entity_type must match a key value in the surface_dict dictionary
+    """
+    def __init__(self, entity_type: str, x: float, y: float):
+        """
+        NAME:           PositionEntity.__init__
+        PARAMETERS:     x and y coordinates of the location of this entity
+                        entity_type, a value within
+        PURPOSE:        This method initializes fields for a new PositionEntity instance.
+        PRECONDITION:   entity_type, x, and y are not none and are initialized.
+        POSTCONDITION:  This instance's fields are initialized to the provided parameters.
+        """
+        super().__init__(x, y)
+        self.entity_type = entity_type
+
+        if entity_type not in surface_dict:
+            assert f"entity_type '{entity_type}' doesn't exist!"
+
+    def draw(self, game_state: "GameState", surface: pygame.Surface) -> None:
+        """
+        NAME:           PositionEntity.draw
+        PARAMETERS:     game_state, the game state this entity is a part of
+                        surface, the window surface to draw to
+        PURPOSE:        This method loads the proper pygame.Surface according to the set self.entity_type
+                        and draws that entity_type with the x/y position being the top left of the surface.
+        PRECONDITION:   This instance is a part of the provided game state,
+        POSTCONDITION:  The surface will have this entity drawn onto it
+        """
+        surface.blit(surface_dict[self.entity_type], (self.x, self.y))
+
+
+class Rectangle(PositionEntity):
     """
     NAME:           Rectangle
     PURPOSE:        A game entity with a rectangular shape.
@@ -188,16 +235,18 @@ class Rectangle(GameEntity):
     size_x: float
     size_y: float
 
-    def __init__(self, x, y, size_x, size_y):
+    def __init__(self, entity_type, x, y, size_x, size_y):
         """
         NAME:           Rectangle.__init__
-        PARAMETERS:     x and y coordinates of the location of this entity
+        PARAMETERS:     entity_type is the type of entity this is, used by subclasses.
+                            Should be 'rectangle' when instantiated directly.
+                        x and y coordinates of the location of this entity
                         size_x and size_y are the width and height of this entity
         PURPOSE:        This method initializes fields for a new Rectangle instance.
         PRECONDITION:   all parameters are not none and are initialized.
         POSTCONDITION:  This instance's fields are initialized to the provided parameters.
         """
-        super().__init__(x, y)
+        super().__init__(entity_type, x, y)
         self.size_x = size_x
         self.size_y = size_y
 
@@ -216,12 +265,18 @@ class Rectangle(GameEntity):
         NAME:           Rectangle.draw
         PARAMETERS:     game_state, the game state this entity is a part of
                         surface, the window surface to draw to
-        PURPOSE:        This method draws a red rectangle to the surface that will be used for the next frame.
+        PURPOSE:        If a rectangle type:
+                            This method draws a red rectangle to the surface that will be used for the next frame.
+                        If any other type:
+                            Ths method calls the superclass logic to draw the respective entity
         PRECONDITION:   This instance is a part of the provided game state,
         POSTCONDITION:  The surface of game_state will have this entity drawn onto it
         """
-        # Draw a red rectangle for simple functionality
-        pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.x, self.y, self.size_x, self.size_y))
+        if self.entity_type == 'rectangle':
+            # Draw a red rectangle for simple functionality
+            pygame.draw.rect(surface, (255, 0, 0), pygame.Rect(self.x, self.y, self.size_x, self.size_y))
+        else:
+            super().draw(game_state, surface)
 
 
 class Bird(Rectangle):
@@ -248,7 +303,7 @@ class Bird(Rectangle):
         PRECONDITION:   all parameters are not none and are initialized.
         POSTCONDITION:  This instance's fields are initialized to the provided parameters.
         """
-        super().__init__(const.BIRD_POS_X, y, const.BIRD_X, const.BIRD_Y)
+        super().__init__('bird', const.BIRD_POS_X, y, const.BIRD_X, const.BIRD_Y)
         self.velocity = 0
         self.dead = False
         self.threat = tuple()
@@ -306,17 +361,6 @@ class Bird(Rectangle):
         # Update Position
         self.y += self.velocity * game_state.delta
 
-    def draw(self, game_state: "GameState", surface: pygame.Surface) -> None:
-        """
-        NAME:           Bird.draw
-        PARAMETERS:     game_state, the game state this entity is a part of
-                        surface, the window surface to draw to
-        PURPOSE:        This method draws a bird to the surface that will be used for the next frame.
-        PRECONDITION:   This instance is a part of the provided game state,
-        POSTCONDITION:  The surface of game_state will have this entity drawn onto it
-        """
-        surface.blit(img_bird, (self.x, self.y))
-
 
 class Pipe(Rectangle):
     """
@@ -325,7 +369,6 @@ class Pipe(Rectangle):
     INVARIANTS:     x and y must not be None and initialized
                     top must be True or False
     """
-    img: pygame.Surface
     top: bool
 
     def __init__(self, x: float, y: float, top: bool):
@@ -338,23 +381,8 @@ class Pipe(Rectangle):
         PRECONDITION:   all parameters are not none and are initialized.
         POSTCONDITION:  This instance's fields are initialized to the provided parameters.
         """
-        super().__init__(x, y, const.PIPE_X, const.PIPE_Y)
+        super().__init__('pipe_top' if top else 'pipe_bottom', x, y, const.PIPE_X, const.PIPE_Y)
         self.top = top
-        if top:
-            self.img = img_pipe_top
-        else:
-            self.img = img_pipe_bottom
-
-    def draw(self, game_state: "GameState", surface: pygame.Surface) -> None:
-        """
-        NAME:           Pipe.draw
-        PARAMETERS:     game_state, the game state this entity is a part of
-                        surface, the window surface to draw to
-        PURPOSE:        This method draws the respective pipe image to the surface that will be used for the next frame.
-        PRECONDITION:   This instance is a part of the provided game state,
-        POSTCONDITION:  The surface of game_state will have this entity drawn onto it
-        """
-        surface.blit(self.img, [self.x, self.y])
 
 
 class PipePair(GameEntity):
@@ -457,18 +485,7 @@ class FloorTile(Rectangle):
         PRECONDITION:   all parameters are not none and are initialized.
         POSTCONDITION:  This instance's fields are initialized to the provided parameters.
         """
-        super().__init__(x, const.FLOOR_Y, const.BASE_X, const.BASE_Y)
-
-    def draw(self, game_state: "GameState", surface: pygame.Surface) -> None:
-        """
-        NAME:           FloorTile.draw
-        PARAMETERS:     game_state, the game state this entity is a part of
-                        surface, the window surface to draw to
-        PURPOSE:        This method draws a floor image at the location of this entity to the game surface.
-        PRECONDITION:   This instance is a part of the provided game state.
-        POSTCONDITION:  The surface of game_state will have this entity drawn onto it
-        """
-        surface.blit(img_base, [self.x, self.y])
+        super().__init__('base', x, const.FLOOR_Y, const.BASE_X, const.BASE_Y)
 
 
 class Floor(GameEntity):
@@ -580,7 +597,7 @@ class MouseLine(DistanceLine):
         PRECONDITION:   a mouse exists in pygame
         POSTCONDITION:  This instance's fields are initialized to the provided parameters.
         """
-        self.mouse_rect = Rectangle(0, 0, 1, 1)
+        self.mouse_rect = Rectangle('rectangle', 0, 0, 1, 1)
         super().__init__(self.mouse_rect)
 
     def update(self, game_state: "GameState") -> None:
@@ -656,7 +673,7 @@ class GameState:
     NAME:           GameState
     PURPOSE:        A class which contains all entities and properties of an active game.
                     This can be considered a class which represents the game itself.
-                    All driving logic for the game is contained in this class.
+                    All dlineriving logic for the game is contained in this class.
     INVARIANTS:     All fields are initialized and not none.
                     Delta and pipes_passed are always positive.
                     Delta cannot be zero.
