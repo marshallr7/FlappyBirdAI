@@ -6,7 +6,9 @@ HEIGHT = 500
 FLOOR_Y = HEIGHT - 50
 # Monte Carlo Search Tree
 MCST_DEPTH = 40
-MCST_DELTA = 0.03  # Wait time for each frame/level in seconds
+MCST_DELTA = 0.06  # Wait time for each frame/level in seconds
+MCST_PREVIEW = 4  # How often to render the bird previews per second
+MCST_STEP = int((1 / MCST_DELTA) / MCST_PREVIEW)  # Used to determine when to render bird previews
 # Size of the numbers
 NUM_X = 24
 NUM_Y = 36

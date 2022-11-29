@@ -1035,6 +1035,14 @@ if __name__ == "__main__":
         next_game_state = mcts.proceed()
         next_game_state.do_update()
         next_game_state.do_draw(window_surface)
+
+        # Extremely hacky here, override the bird x pos to be "in the future", draw it, and set it back
+        for i in range(const.MCST_STEP, len(mcts.path), const.MCST_STEP):
+            mcts.path[i].game_state.bird.x += next_game_state.pipe_speed * next_game_state.delta * i
+            # The bird draw method in specific doesn't need the game state
+            mcts.path[i].game_state.bird.draw(None, window_surface)
+            mcts.path[i].game_state.bird.x = const.BIRD_POS_X
+
         pygame.display.update()
         time.sleep(const.MCST_DELTA)
 
