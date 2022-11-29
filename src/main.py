@@ -1037,7 +1037,9 @@ if __name__ == "__main__":
         next_game_state.do_draw(window_surface)
 
         # Extremely hacky here, override the bird x pos to be "in the future", draw it, and set it back
-        for i in range(const.MCST_STEP, len(mcst.path), const.MCST_STEP):
+        indexes = list(range(const.MCST_STEP, len(mcst.path), const.MCST_STEP))
+        indexes.append(len(mcst.path) - 1)  # Manually append the last part of the path
+        for i in indexes:
             mcst.path[i].game_state.bird.x += next_game_state.pipe_speed * next_game_state.delta * i
             # The bird draw method in specific doesn't need the game state
             mcst.path[i].game_state.bird.draw(None, window_surface)
