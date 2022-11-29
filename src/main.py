@@ -56,7 +56,7 @@ frame_id: int
 # ###################################
 
 
-class MCTS_Node:
+class MCST_Node:
     # The game state that belongs to this node
     game_state: "GameState"
 
@@ -64,13 +64,13 @@ class MCTS_Node:
     populated: bool
 
     # This nodes parent node, None if root
-    parent: "MCTS_Node"
+    parent: "MCST_Node"
     # The future game state if the bird falls, null when explored/unpopulated
-    left_node: "MCTS_Node"
+    left_node: "MCST_Node"
     # The future game state if the bird jumps, null when explored/unpopulated
-    right_node: "MCTS_Node"
+    right_node: "MCST_Node"
 
-    def __init__(self, parent: "MCTS_Node", game_state: "GameState"):
+    def __init__(self, parent: "MCST_Node", game_state: "GameState"):
         self.game_state = game_state
         self.populated = False
         self.parent = parent
@@ -94,16 +94,16 @@ class MCTS_Node:
 
         # Set left and right nodes if the bird isn't dead, dead bird will always be a terminal node
         if not left_state.bird.dead:
-            self.left_node = MCTS_Node(self, left_state)
+            self.left_node = MCST_Node(self, left_state)
         else:
             self.left_node = None
 
         if not right_state.bird.dead:
-            self.right_node = MCTS_Node(self, right_state)
+            self.right_node = MCST_Node(self, right_state)
         else:
             self.right_node = None
 
-    def get_best_child(self) -> "MCTS_Node":
+    def get_best_child(self) -> "MCST_Node":
         if not self.populated:
             self._populate_children()
 
@@ -127,7 +127,7 @@ class MCTS_Node:
         """
         return self.left_node is None and self.right_node is None
 
-    def remove_child(self, child: "MCTS_Node"):
+    def remove_child(self, child: "MCST_Node"):
         if self.left_node == child:
             self.left_node = None
         elif self.right_node == child:
@@ -148,13 +148,13 @@ class MCTS_Node:
             self.right_node.disintegrate()
 
 
-class MCTS:
+class MCST:
     # The root node
-    root: MCTS_Node
+    root: MCST_Node
     # The ending node
-    tail: MCTS_Node
+    tail: MCST_Node
     # Ordered list of nodes from the root node to the best ending node
-    path: list[MCTS_Node]
+    path: list[MCST_Node]
     # The current frame ID
     frame_id: int
     # The max depth of the search tree (frame lookahead)
@@ -162,7 +162,7 @@ class MCTS:
 
     def __init__(self, game_state: "GameState"):
         game_state.delta = const.MCST_DELTA
-        self.root = MCTS_Node(None, game_state)
+        self.root = MCST_Node(None, game_state)
         self.tail = self.root
         self.path = list()
         self.path.append(self.root)
@@ -1021,27 +1021,27 @@ if __name__ == "__main__":
     #
     # ########## Resume normal game run logic
 
-    ########## Test code for MCTS
+    ########## Test code for MCST
 
     # Allow deeper recursions, fix would be to limit the depth in each search call on each frame
     sys.setrecursionlimit(1000000)
 
-    mcts = MCTS(GameState(debug))
+    mcst = MCST(GameState(debug))
 
     # path will always start with a length of 1
-    while len(mcts.path) > 0:
+    while len(mcst.path) > 0:
         frame_id += 1
-        mcts.search()
-        next_game_state = mcts.proceed()
+        mcst.search()
+        next_game_state = mcst.proceed()
         next_game_state.do_update()
         next_game_state.do_draw(window_surface)
 
         # Extremely hacky here, override the bird x pos to be "in the future", draw it, and set it back
-        for i in range(const.MCST_STEP, len(mcts.path), const.MCST_STEP):
-            mcts.path[i].game_state.bird.x += next_game_state.pipe_speed * next_game_state.delta * i
+        for i in range(const.MCST_STEP, len(mcst.path), const.MCST_STEP):
+            mcst.path[i].game_state.bird.x += next_game_state.pipe_speed * next_game_state.delta * i
             # The bird draw method in specific doesn't need the game state
-            mcts.path[i].game_state.bird.draw(None, window_surface)
-            mcts.path[i].game_state.bird.x = const.BIRD_POS_X
+            mcst.path[i].game_state.bird.draw(None, window_surface)
+            mcst.path[i].game_state.bird.x = const.BIRD_POS_X
 
         pygame.display.update()
         time.sleep(const.MCST_DELTA)
