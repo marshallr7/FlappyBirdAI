@@ -46,6 +46,178 @@ surface_dict = {
 }
 
 
+# ###################################
+# #############[ Start ]#############
+# ##### Monte Carlo Search Tree #####
+# ###################################
+# ###################################
+
+
+class MCTS_Node:
+    # The game state that belongs to this node
+    game_state: "GameState"
+
+    # This nodes parent node, None if root
+    parent: "MCTS_Node"
+    # The future game state if the bird falls, null when explored
+    left_node: "MCTS_Node"
+    # The future game state if the bird jumps, null when explored
+    right_node: "MCTS_Node"
+
+    def __init__(self, parent: "MCTS_Node", game_state: "GameState"):
+        self.game_state = game_state
+        self.parent = parent
+
+        # Clone the states and make the right state jump
+        left_state = copy.deepcopy(game_state)
+        right_state = copy.deepcopy(game_state)
+        right_state.bird.jump()
+        # Update the states
+        left_state.do_update()
+        right_state.do_update()
+
+        # Set left and right nodes if the bird isn't dead, dead bird will always be a terminal node
+        if not left_state.bird.dead:
+            self.left_node = MCTS_Node(self, left_state)
+        else:
+            self.left_node = None
+
+        if not right_state.bird.dead:
+            self.right_node = MCTS_Node(self, right_state)
+        else:
+            self.right_node = None
+
+    def get_best_child(self) -> "MCTS_Node":
+        if self.left_node is not None and self.right_node is not None:
+            left_better = self.left_node.get_score() > self.right_node.get_score()
+            return self.left_node if left_better else self.right_node
+        elif self.left_node is None and self.right_node is not None:
+            return self.right_node
+        elif self.left_node is not None and self.right_node is None:
+            return self.left_node
+        else:
+            assert False
+
+    def get_score(self) -> float:
+        """
+        :return: the threat distance of the bird
+        """
+        return self.game_state.bird.threat[0]
+
+    def is_terminal(self):
+        """
+        :return: true if the node has no children (bird is dead)
+        """
+        return self.game_state.bird.dead
+
+    def remove_child(self, child: "MCTS_Node"):
+        if self.left_node == child:
+            self.left_node = None
+        elif self.right_node == child:
+            self.right_node = None
+        else:
+            raise Exception("Neither child matched!")
+
+    def disintegrate(self):
+        """
+        Destroy all references this node has, all references of child nodes,
+        and the reference the parent has to this node.
+        :return: None
+        """
+        # don't disintegrate root
+        if self.parent is None:
+            raise Exception("Disintegrating root node!")
+
+        self.parent.remove_child(self)
+        self.parent = None
+
+        if self.left_node is not None:
+            self.left_node.disintegrate()
+
+        if self.right_node is not None:
+            self.right_node.disintegrate()
+
+    def __hash__(self):
+        return hash(self)
+
+    def __eq__(self, other):
+        return self == other
+
+
+class MCTS:
+    # The root node
+    root: MCTS_Node
+    # The ending node
+    tail: MCTS_Node
+    # Ordered list of nodes from the root node to the best ending node
+    path: list[MCTS_Node]
+    # The current frame ID
+    frame_id: int
+    # The max depth of the search tree (frame lookahead)
+    frame_limit: int
+
+    def __init__(self, game_state: "GameState"):
+        game_state.delta = const.MCTS_DELTA
+        self.root = MCTS_Node(None, game_state)
+        self.tail = self.root
+        self.path = list()
+        self.frame_id = 0
+        self.frame_limit = const.MCTS_DEPTH
+
+    def _climb(self):
+        """
+        Climb up a node from the tail until there is a node with a non-terminal child
+        :return:
+        """
+        if self.tail.is_terminal():
+            raise Exception("Back propagating when tail isn't terminal!")
+
+        parent = self.tail.parent
+        self.tail.disintegrate()
+        self.path.pop()
+
+        # Keep climbing up until we find an unexplored path
+        if parent.is_terminal():
+            self._climb()
+
+    def path(self):
+        """
+        Calculate the best path from the current tail
+        :return:
+        """
+        # Loop until we find a good route that leads to the frame limit
+        # This expands and searches as it goes
+        while self.frame_id + self.frame_limit > self.frame_id + len(self.path):
+            next_node = self.tail.get_best_child()
+
+            # Case #1, continuing down the tree
+            if next_node is not None:
+                # Add the node to the path and continue
+                self.path.append(next_node)
+                continue
+
+            # Case #2, node is terminal, climb and let the next loop search
+            self._climb()
+
+    def proceed(self):
+        """
+        advance the root to the next node in the path and disintegrate the old root
+        :return: the new root's game state
+        """
+        new_root = self.path[1]
+        self.path.pop(0)
+        self.root.remove_child(new_root)
+        self.root.disintegrate()
+        self.root = new_root
+
+
+# ###################################
+# ###################################
+# ##### Monte Carlo Search Tree #####
+# ##############[ End ]##############
+# ###################################
+
+
 def dist_to_rect_side(rectangle_1: "Rectangle", rectangle_2: "Rectangle") -> tuple[float, list[float]]:
     """
     NAME:           dist_to_rect_side
