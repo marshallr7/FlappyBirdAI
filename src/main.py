@@ -759,7 +759,7 @@ class DistanceLine(GameEntity):
         POSTCONDITION:  The surface of game_state will have this entity drawn onto it
         """
         # The line will be pink
-        pygame.draw.line(surface, (255, 0, 255), [self.x, self.y], self.closest[1])
+        pygame.draw.line(surface, (255, 0, 255), self.start.get_center_pos(), self.closest[1])
 
 
 class MouseLine(DistanceLine):
@@ -916,7 +916,8 @@ class GameState:
 
         # Add a DistanceLine for each bird and the mouse if we are debugging
         if debug_entities:
-            self.entities.append(MouseLine())
+            # Outstanding bug where pygame is not updating the mouse position
+            # self.entities.append(MouseLine())
             self.entities.append(DistanceLine(self.bird))
 
         # Set up the background
@@ -1036,14 +1037,15 @@ if __name__ == "__main__":
         next_game_state.do_update()
         next_game_state.do_draw(window_surface)
 
-        # Extremely hacky here, override the bird x pos to be "in the future", draw it, and set it back
-        indexes = list(range(const.MCST_STEP, len(mcst.path), const.MCST_STEP))
-        indexes.append(len(mcst.path) - 1)  # Manually append the last part of the path
-        for i in indexes:
-            mcst.path[i].game_state.bird.x += next_game_state.pipe_speed * next_game_state.delta * i
-            # The bird draw method in specific doesn't need the game state
-            mcst.path[i].game_state.bird.draw(None, window_surface)
-            mcst.path[i].game_state.bird.x = const.BIRD_POS_X
+        if debug:
+            # Extremely hacky here, override the bird x pos to be "in the future", draw it, and set it back
+            indexes = list(range(const.MCST_STEP, len(mcst.path), const.MCST_STEP))
+            indexes.append(len(mcst.path) - 1)  # Manually append the last part of the path
+            for i in indexes:
+                mcst.path[i].game_state.bird.x += next_game_state.pipe_speed * next_game_state.delta * i
+                # The bird draw method in specific doesn't need the game state
+                mcst.path[i].game_state.bird.draw(None, window_surface)
+                mcst.path[i].game_state.bird.x = const.BIRD_POS_X
 
         pygame.display.update()
         time.sleep(const.MCST_DELTA)
