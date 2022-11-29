@@ -808,6 +808,34 @@ if __name__ == "__main__":
     window_surface = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
     pygame.display.set_caption("Flappy Bird AI")
 
+    ########## Test Code for deep copy
+
+    # Store in a linear list to test memory usage
+    gameStates = list[GameState]()
+
+    # Create initial game state
+    gameStates.append(GameState(False))  # 1
+    # Establish frame times, this doesn't account
+    gameStates[0].delta = 0.008
+
+    # Eat memory as a test, proceed linearly
+    for i in range(0, 1000000):
+        # Deep copy a new state based on the last state and update
+        new_state = copy.deepcopy(gameStates[i])
+        new_state.do_update()
+        # Wait to draw the next frame
+        time.sleep(0.008)
+        # Draw the current state
+        new_state.do_draw(window_surface)
+        pygame.display.update()
+        # Put the new state at the end of the list for the next loop
+        gameStates.append(new_state)
+
+    # Force early exit as we're just testing deep copy
+    sys.exit(0)
+
+    ########## Resume normal game run logic
+
     current_game_state: GameState
 
     clock = pygame.time.Clock()
@@ -826,8 +854,10 @@ if __name__ == "__main__":
             # Calculate the time since the last frame
             # pygame.clock.get_fps() averages the last 10 frames
             # pygame.clock.get_time() returns an int in ms, no decimal. 16 instead if 16.6777
+            # this returns seconds with a decimal, such as 0.016 being 16ms
             next_frame = time.time()
             current_game_state.delta = next_frame - last_frame
+            print(current_game_state.delta)
             last_frame = next_frame
 
             # Update the game state
