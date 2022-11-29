@@ -22,7 +22,7 @@ PIPE_Y = 320
 BIRD_X = 32
 BIRD_Y = 24
 # The distance from an object in which the bird dies
-BIRD_DEATH = BIRD_Y / 2
+BIRD_DEATH = BIRD_X / 1.9
 # The X position of the bird
 BIRD_POS_X = 50
 # Pipe Speed/Increase
