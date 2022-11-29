@@ -45,6 +45,9 @@ surface_dict = {
     'base': img_base
 }
 
+# The current frame being rendered
+frame_id: int
+
 
 # ###################################
 # #############[ Start ]#############
@@ -57,20 +60,33 @@ class MCTS_Node:
     # The game state that belongs to this node
     game_state: "GameState"
 
+    # If this node has created its child nodes before, used to prevent researching and infinite recursion
+    populated: bool
+
     # This nodes parent node, None if root
     parent: "MCTS_Node"
-    # The future game state if the bird falls, null when explored
+    # The future game state if the bird falls, null when explored/unpopulated
     left_node: "MCTS_Node"
-    # The future game state if the bird jumps, null when explored
+    # The future game state if the bird jumps, null when explored/unpopulated
     right_node: "MCTS_Node"
 
     def __init__(self, parent: "MCTS_Node", game_state: "GameState"):
         self.game_state = game_state
+        self.populated = False
         self.parent = parent
+        self.left_node = None
+        self.right_node = None
+
+    def _populate_children(self):
+        """
+        Create child nodes for this node
+        :return:
+        """
+        self.populated = True
 
         # Clone the states and make the right state jump
-        left_state = copy.deepcopy(game_state)
-        right_state = copy.deepcopy(game_state)
+        left_state = copy.deepcopy(self.game_state)
+        right_state = copy.deepcopy(self.game_state)
         right_state.bird.jump()
         # Update the states
         left_state.do_update()
@@ -88,6 +104,9 @@ class MCTS_Node:
             self.right_node = None
 
     def get_best_child(self) -> "MCTS_Node":
+        if not self.populated:
+            self._populate_children()
+
         if self.left_node is not None and self.right_node is not None:
             left_better = self.left_node.get_score() > self.right_node.get_score()
             return self.left_node if left_better else self.right_node
@@ -95,8 +114,6 @@ class MCTS_Node:
             return self.right_node
         elif self.left_node is not None and self.right_node is None:
             return self.left_node
-        else:
-            assert False
 
     def get_score(self) -> float:
         """
@@ -108,7 +125,7 @@ class MCTS_Node:
         """
         :return: true if the node has no children (bird is dead)
         """
-        return self.game_state.bird.dead
+        return self.left_node is None and self.right_node is None
 
     def remove_child(self, child: "MCTS_Node"):
         if self.left_node == child:
@@ -124,24 +141,11 @@ class MCTS_Node:
         and the reference the parent has to this node.
         :return: None
         """
-        # don't disintegrate root
-        if self.parent is None:
-            raise Exception("Disintegrating root node!")
-
-        self.parent.remove_child(self)
-        self.parent = None
-
         if self.left_node is not None:
             self.left_node.disintegrate()
 
         if self.right_node is not None:
             self.right_node.disintegrate()
-
-    def __hash__(self):
-        return hash(self)
-
-    def __eq__(self, other):
-        return self == other
 
 
 class MCTS:
@@ -157,44 +161,51 @@ class MCTS:
     frame_limit: int
 
     def __init__(self, game_state: "GameState"):
-        game_state.delta = const.MCTS_DELTA
+        game_state.delta = const.MCST_DELTA
         self.root = MCTS_Node(None, game_state)
         self.tail = self.root
         self.path = list()
+        self.path.append(self.root)
         self.frame_id = 0
-        self.frame_limit = const.MCTS_DEPTH
+        self.frame_limit = const.MCST_DEPTH
 
     def _climb(self):
         """
         Climb up a node from the tail until there is a node with a non-terminal child
         :return:
         """
-        if self.tail.is_terminal():
+        if not self.tail.is_terminal():
             raise Exception("Back propagating when tail isn't terminal!")
 
         parent = self.tail.parent
         self.tail.disintegrate()
         self.path.pop()
+        parent.remove_child(self.tail)
+        self.tail = parent
 
         # Keep climbing up until we find an unexplored path
         if parent.is_terminal():
             self._climb()
 
-    def path(self):
+    def search(self):
         """
-        Calculate the best path from the current tail
+        Search for the best path from the current tail
         :return:
         """
+        global frame_id
+
         # Loop until we find a good route that leads to the frame limit
         # This expands and searches as it goes
         while self.frame_id + self.frame_limit > self.frame_id + len(self.path):
-            next_node = self.tail.get_best_child()
-
+            print(len(self.path))
             # Case #1, continuing down the tree
-            if next_node is not None:
-                # Add the node to the path and continue
-                self.path.append(next_node)
-                continue
+            next_node = self.tail.get_best_child()
+            if not self.tail.is_terminal():
+                if next_node is not None:
+                    # Add the node to the path and continue
+                    self.path.append(next_node)
+                    self.tail = next_node
+                    continue
 
             # Case #2, node is terminal, climb and let the next loop search
             self._climb()
@@ -209,6 +220,7 @@ class MCTS:
         self.root.remove_child(new_root)
         self.root.disintegrate()
         self.root = new_root
+        return self.root.game_state
 
 
 # ###################################
@@ -977,34 +989,56 @@ if __name__ == "__main__":
     debug = bool(sys.argv[1]) if (len(sys.argv) > 1) else False
 
     # Set up the window to draw to
+    frame_id = 0
     window_surface = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
     pygame.display.set_caption("Flappy Bird AI")
 
-    ########## Test Code for deep copy
+    # ########## Test Code for deep copy
+    #
+    # # Store in a linear list to test memory usage
+    # gameStates = list[GameState]()
+    #
+    # # Create initial game state
+    # gameStates.append(GameState(False))  # 1
+    # # Establish frame times, this doesn't account
+    # gameStates[0].delta = 0.008
+    #
+    # # Eat memory as a test, proceed linearly
+    # for i in range(0, 1000000):
+    #     # Deep copy a new state based on the last state and update
+    #     new_state = copy.deepcopy(gameStates[i])
+    #     new_state.do_update()
+    #     # Wait to draw the next frame
+    #     time.sleep(0.008)
+    #     # Draw the current state
+    #     new_state.do_draw(window_surface)
+    #     pygame.display.update()
+    #     # Put the new state at the end of the list for the next loop
+    #     gameStates.append(new_state)
+    #
+    # # Force early exit as we're just testing deep copy
+    # sys.exit(0)
+    #
+    # ########## Resume normal game run logic
 
-    # Store in a linear list to test memory usage
-    gameStates = list[GameState]()
+    ########## Test code for MCTS
 
-    # Create initial game state
-    gameStates.append(GameState(False))  # 1
-    # Establish frame times, this doesn't account
-    gameStates[0].delta = 0.008
+    # Allow deeper recursions, fix would be to limit the depth in each search call on each frame
+    sys.setrecursionlimit(1000000)
 
-    # Eat memory as a test, proceed linearly
-    for i in range(0, 1000000):
-        # Deep copy a new state based on the last state and update
-        new_state = copy.deepcopy(gameStates[i])
-        new_state.do_update()
-        # Wait to draw the next frame
-        time.sleep(0.008)
-        # Draw the current state
-        new_state.do_draw(window_surface)
+    mcts = MCTS(GameState(debug))
+
+    # path will always start with a length of 1
+    while len(mcts.path) > 0:
+        frame_id += 1
+        mcts.search()
+        next_game_state = mcts.proceed()
+        next_game_state.do_update()
+        next_game_state.do_draw(window_surface)
         pygame.display.update()
-        # Put the new state at the end of the list for the next loop
-        gameStates.append(new_state)
+        time.sleep(const.MCST_DELTA)
 
-    # Force early exit as we're just testing deep copy
-    sys.exit(0)
+    exit(0)
 
     ########## Resume normal game run logic
 

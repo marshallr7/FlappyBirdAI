@@ -5,8 +5,8 @@ WIDTH = 600
 HEIGHT = 500
 FLOOR_Y = HEIGHT - 50
 # Monte Carlo Search Tree
-MCTS_DEPTH = 600
-MCTS_DELTA = 0.01  # Wait time for each frame/level in seconds
+MCST_DEPTH = 40
+MCST_DELTA = 0.03  # Wait time for each frame/level in seconds
 # Size of the numbers
 NUM_X = 24
 NUM_Y = 36
