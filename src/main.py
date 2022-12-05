@@ -14,6 +14,7 @@ import time
 import pygame
 import const
 
+# Image assets for entities with a sprite
 img_pipe_bottom = pygame.image.load("../assets/pipe.png")
 img_pipe_top = pygame.transform.flip(img_pipe_bottom, False, True)
 img_bird = pygame.image.load("../assets/bird1.png")
@@ -21,6 +22,7 @@ img_background = pygame.image.load("../assets/bg.png")
 img_background = pygame.transform.scale(img_background, (const.WIDTH, const.HEIGHT))
 img_base = pygame.image.load("../assets/base.png")
 
+# Image assets for numbers
 img_num_0 = pygame.image.load("../assets/numbers/0.png")
 img_num_1 = pygame.image.load("../assets/numbers/1.png")
 img_num_2 = pygame.image.load("../assets/numbers/2.png")
@@ -33,8 +35,18 @@ img_num_8 = pygame.image.load("../assets/numbers/8.png")
 img_num_9 = pygame.image.load("../assets/numbers/9.png")
 
 # List of images used to update score
-img_dict = {0: img_num_0, 1: img_num_1, 2: img_num_2, 3: img_num_3, 4: img_num_4, 5: img_num_5, 6: img_num_6,
-            7: img_num_7, 8: img_num_8, 9: img_num_9}
+img_dict = {
+    0: img_num_0,
+    1: img_num_1,
+    2: img_num_2,
+    3: img_num_3,
+    4: img_num_4,
+    5: img_num_5,
+    6: img_num_6,
+    7: img_num_7,
+    8: img_num_8,
+    9: img_num_9
+}
 
 # Dictionary of entity types and their surfaces to draw
 surface_dict = {
@@ -44,10 +56,6 @@ surface_dict = {
     'bird': img_bird,
     'base': img_base
 }
-
-# The current frame being rendered
-frame_id: int
-
 
 # ###################################
 # #############[ Start ]#############
@@ -74,7 +82,9 @@ class MCST_Node:
         self.game_state = game_state
         self.populated = False
         self.parent = parent
+        # noinspection PyTypeChecker
         self.left_node = None
+        # noinspection PyTypeChecker
         self.right_node = None
 
     def _populate_children(self):
@@ -96,11 +106,13 @@ class MCST_Node:
         if not left_state.bird.dead:
             self.left_node = MCST_Node(self, left_state)
         else:
+            # noinspection PyTypeChecker
             self.left_node = None
 
         if not right_state.bird.dead:
             self.right_node = MCST_Node(self, right_state)
         else:
+            # noinspection PyTypeChecker
             self.right_node = None
 
     def get_best_child(self) -> "MCST_Node":
@@ -129,8 +141,10 @@ class MCST_Node:
 
     def remove_child(self, child: "MCST_Node"):
         if self.left_node == child:
+            # noinspection PyTypeChecker
             self.left_node = None
         elif self.right_node == child:
+            # noinspection PyTypeChecker
             self.right_node = None
         else:
             raise Exception("Neither child matched!")
@@ -155,19 +169,17 @@ class MCST:
     tail: MCST_Node
     # Ordered list of nodes from the root node to the best ending node
     path: list[MCST_Node]
-    # The current frame ID
-    frame_id: int
     # The max depth of the search tree (frame lookahead)
-    frame_limit: int
+    depth_limit: int
 
     def __init__(self, game_state: "GameState"):
         game_state.delta = const.MCST_DELTA
+        # noinspection PyTypeChecker
         self.root = MCST_Node(None, game_state)
         self.tail = self.root
         self.path = list()
         self.path.append(self.root)
-        self.frame_id = 0
-        self.frame_limit = const.MCST_DEPTH
+        self.depth_limit = const.MCST_DEPTH
 
     def _climb(self):
         """
@@ -192,11 +204,9 @@ class MCST:
         Search for the best path from the current tail
         :return:
         """
-        global frame_id
-
         # Loop until we find a good route that leads to the frame limit
         # This expands and searches as it goes
-        while self.frame_id + self.frame_limit > self.frame_id + len(self.path):
+        while self.depth_limit > len(self.path):
             print(len(self.path))
             # Case #1, continuing down the tree
             next_node = self.tail.get_best_child()
@@ -694,8 +704,8 @@ class Floor(GameEntity):
         self.tiles = list()
 
         num_tiles = math.ceil((const.WIDTH + const.BASE_X) / const.BASE_X)
-        for i in range(num_tiles):
-            self.tiles.append(FloorTile(i * const.BASE_X))
+        for nt in range(num_tiles):
+            self.tiles.append(FloorTile(nt * const.BASE_X))
 
     def update(self, game_state: "GameState") -> None:
         """
@@ -990,39 +1000,8 @@ if __name__ == "__main__":
     debug = bool(sys.argv[1]) if (len(sys.argv) > 1) else False
 
     # Set up the window to draw to
-    frame_id = 0
     window_surface = pygame.display.set_mode((const.WIDTH, const.HEIGHT))
     pygame.display.set_caption("Flappy Bird AI")
-
-    # ########## Test Code for deep copy
-    #
-    # # Store in a linear list to test memory usage
-    # gameStates = list[GameState]()
-    #
-    # # Create initial game state
-    # gameStates.append(GameState(False))  # 1
-    # # Establish frame times, this doesn't account
-    # gameStates[0].delta = 0.008
-    #
-    # # Eat memory as a test, proceed linearly
-    # for i in range(0, 1000000):
-    #     # Deep copy a new state based on the last state and update
-    #     new_state = copy.deepcopy(gameStates[i])
-    #     new_state.do_update()
-    #     # Wait to draw the next frame
-    #     time.sleep(0.008)
-    #     # Draw the current state
-    #     new_state.do_draw(window_surface)
-    #     pygame.display.update()
-    #     # Put the new state at the end of the list for the next loop
-    #     gameStates.append(new_state)
-    #
-    # # Force early exit as we're just testing deep copy
-    # sys.exit(0)
-    #
-    # ########## Resume normal game run logic
-
-    ########## Test code for MCST
 
     # Allow deeper recursions, fix would be to limit the depth in each search call on each frame
     sys.setrecursionlimit(1000000)
@@ -1031,7 +1010,6 @@ if __name__ == "__main__":
 
     # path will always start with a length of 1
     while len(mcst.path) > 0:
-        frame_id += 1
         mcst.search()
         next_game_state = mcst.proceed()
         next_game_state.do_update()
@@ -1044,6 +1022,7 @@ if __name__ == "__main__":
             for i in indexes:
                 mcst.path[i].game_state.bird.x += next_game_state.pipe_speed * next_game_state.delta * i
                 # The bird draw method in specific doesn't need the game state
+                # noinspection PyTypeChecker
                 mcst.path[i].game_state.bird.draw(None, window_surface)
                 mcst.path[i].game_state.bird.x = const.BIRD_POS_X
 
@@ -1051,38 +1030,3 @@ if __name__ == "__main__":
         time.sleep(const.MCST_DELTA)
 
     exit(0)
-
-    ########## Resume normal game run logic
-
-    current_game_state: GameState
-
-    clock = pygame.time.Clock()
-    # The last time a frame was rendered, used to calculate frame time
-    last_frame = time.time()
-
-    while True:
-        # Create a new game state
-        current_game_state = GameState(debug)
-
-        # Execute game state logic forever
-        while not current_game_state.bird.dead:
-            # Limit the frame rate, this needs to be called every frame
-            clock.tick(const.FPS)
-
-            # Calculate the time since the last frame
-            # pygame.clock.get_fps() averages the last 10 frames
-            # pygame.clock.get_time() returns an int in ms, no decimal. 16 instead if 16.6777
-            # this returns seconds with a decimal, such as 0.016 being 16ms
-            next_frame = time.time()
-            current_game_state.delta = next_frame - last_frame
-            print(current_game_state.delta)
-            last_frame = next_frame
-
-            # Update the game state
-            current_game_state.do_event()
-            current_game_state.do_update()
-
-            # Draw the next frame
-            current_game_state.do_draw(window_surface)
-            # Display the next frame
-            pygame.display.update()
