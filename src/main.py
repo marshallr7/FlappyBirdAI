@@ -59,12 +59,12 @@ surface_dict = {
 
 # ###################################
 # #############[ Start ]#############
-# ##### Monte Carlo Search Tree #####
+# ########### Search Tree ###########
 # ###################################
 # ###################################
 
 
-class MCST_Node:
+class TreeNode:
     # The game state that belongs to this node
     game_state: "GameState"
 
@@ -72,13 +72,13 @@ class MCST_Node:
     populated: bool
 
     # This nodes parent node, None if root
-    parent: "MCST_Node"
+    parent: "TreeNode"
     # The future game state if the bird falls, null when explored/unpopulated
-    left_node: "MCST_Node"
+    left_node: "TreeNode"
     # The future game state if the bird jumps, null when explored/unpopulated
-    right_node: "MCST_Node"
+    right_node: "TreeNode"
 
-    def __init__(self, parent: "MCST_Node", game_state: "GameState"):
+    def __init__(self, parent: "TreeNode", game_state: "GameState"):
         self.game_state = game_state
         self.populated = False
         self.parent = parent
@@ -104,18 +104,18 @@ class MCST_Node:
 
         # Set left and right nodes if the bird isn't dead, dead bird will always be a terminal node
         if not left_state.bird.dead:
-            self.left_node = MCST_Node(self, left_state)
+            self.left_node = TreeNode(self, left_state)
         else:
             # noinspection PyTypeChecker
             self.left_node = None
 
         if not right_state.bird.dead:
-            self.right_node = MCST_Node(self, right_state)
+            self.right_node = TreeNode(self, right_state)
         else:
             # noinspection PyTypeChecker
             self.right_node = None
 
-    def get_best_child(self) -> "MCST_Node":
+    def get_best_child(self) -> "TreeNode":
         if not self.populated:
             self._populate_children()
 
@@ -139,7 +139,7 @@ class MCST_Node:
         """
         return self.left_node is None and self.right_node is None
 
-    def remove_child(self, child: "MCST_Node"):
+    def remove_child(self, child: "TreeNode"):
         if self.left_node == child:
             # noinspection PyTypeChecker
             self.left_node = None
@@ -162,20 +162,20 @@ class MCST_Node:
             self.right_node.disintegrate()
 
 
-class MCST:
+class Tree:
     # The root node
-    root: MCST_Node
+    root: TreeNode
     # The ending node
-    tail: MCST_Node
+    tail: TreeNode
     # Ordered list of nodes from the root node to the best ending node
-    path: list[MCST_Node]
+    path: list[TreeNode]
     # The max depth of the search tree (frame lookahead)
     depth_limit: int
 
     def __init__(self, game_state: "GameState"):
         game_state.delta = const.MCST_DELTA
         # noinspection PyTypeChecker
-        self.root = MCST_Node(None, game_state)
+        self.root = TreeNode(None, game_state)
         self.tail = self.root
         self.path = list()
         self.path.append(self.root)
@@ -235,7 +235,7 @@ class MCST:
 
 # ###################################
 # ###################################
-# ##### Monte Carlo Search Tree #####
+# ########### Search Tree ###########
 # ##############[ End ]##############
 # ###################################
 
@@ -1006,7 +1006,7 @@ if __name__ == "__main__":
     # Allow deeper recursions, fix would be to limit the depth in each search call on each frame
     sys.setrecursionlimit(1000000)
 
-    mcst = MCST(GameState(debug))
+    mcst = Tree(GameState(debug))
 
     # path will always start with a length of 1
     while len(mcst.path) > 0:
