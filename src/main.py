@@ -173,13 +173,13 @@ class Tree:
     depth_limit: int
 
     def __init__(self, game_state: "GameState"):
-        game_state.delta = const.MCST_DELTA
+        game_state.delta = const.TREE_DELTA
         # noinspection PyTypeChecker
         self.root = TreeNode(None, game_state)
         self.tail = self.root
         self.path = list()
         self.path.append(self.root)
-        self.depth_limit = const.MCST_DEPTH
+        self.depth_limit = const.TREE_DEPTH
 
     def _climb(self):
         """
@@ -1006,27 +1006,27 @@ if __name__ == "__main__":
     # Allow deeper recursions, fix would be to limit the depth in each search call on each frame
     sys.setrecursionlimit(1000000)
 
-    mcst = Tree(GameState(debug))
+    tree = Tree(GameState(debug))
 
     # path will always start with a length of 1
-    while len(mcst.path) > 0:
-        mcst.search()
-        next_game_state = mcst.proceed()
+    while len(tree.path) > 0:
+        tree.search()
+        next_game_state = tree.proceed()
         next_game_state.do_update()
         next_game_state.do_draw(window_surface)
 
         if debug:
             # Extremely hacky here, override the bird x pos to be "in the future", draw it, and set it back
-            indexes = list(range(const.MCST_STEP, len(mcst.path), const.MCST_STEP))
-            indexes.append(len(mcst.path) - 1)  # Manually append the last part of the path
+            indexes = list(range(const.TREE_STEP, len(tree.path), const.TREE_STEP))
+            indexes.append(len(tree.path) - 1)  # Manually append the last part of the path
             for i in indexes:
-                mcst.path[i].game_state.bird.x += next_game_state.pipe_speed * next_game_state.delta * i
+                tree.path[i].game_state.bird.x += next_game_state.pipe_speed * next_game_state.delta * i
                 # The bird draw method in specific doesn't need the game state
                 # noinspection PyTypeChecker
-                mcst.path[i].game_state.bird.draw(None, window_surface)
-                mcst.path[i].game_state.bird.x = const.BIRD_POS_X
+                tree.path[i].game_state.bird.draw(None, window_surface)
+                tree.path[i].game_state.bird.x = const.BIRD_POS_X
 
         pygame.display.update()
-        time.sleep(const.MCST_DELTA)
+        time.sleep(const.TREE_DELTA)
 
     exit(0)
