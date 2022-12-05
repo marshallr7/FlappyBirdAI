@@ -1,5 +1,3 @@
-# Target Frames Rendered Per Second
-FPS = 60
 # Window Properties
 WIDTH = 600
 HEIGHT = 500
