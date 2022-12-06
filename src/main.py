@@ -97,7 +97,7 @@ class TreeNode:
         NAME:           TreeNode.__init__
         PARAMETERS:     parent: The parent node which precedes this nodes game_state, None when this is the root node
                         game_state: the state of this game this node represents, never None
-        PURPOSE:        This method initializes fields for a new DrawableEntity instance.
+        PURPOSE:        This method initializes fields for a new TreeNode instance.
         PRECONDITION:   game_state and populated are set to a non None value,
                         parent is set to the provided value,
                         left_node and right_node are set to None.
@@ -189,7 +189,7 @@ class TreeNode:
         NAME:           TreeNode.remove_child
         PARAMETERS:     child: the child node to remove
         PURPOSE:        This method removes the provided child node from itself
-        PRECONDITION:   The child parameter is
+        PRECONDITION:   The child parameter is either the left or right node of this node.
         POSTCONDITION:  True is returned if this node can be explored no further, False otherwise
         """
         if self.left_node == child:
@@ -207,8 +207,8 @@ class TreeNode:
         PARAMETERS:     none
         PURPOSE:        This method recourses through child nodes before removing them from this instance to remove
                             references to the nodes for garbage collection.
-        PRECONDITION:   The child parameter is
-        POSTCONDITION:  True is returned if this node can be explored no further, False otherwise
+        PRECONDITION:   none
+        POSTCONDITION:  this node and all its now previous child nodes have removed their references to each other.
         """
         if self.left_node is not None:
             self.left_node.disintegrate()
