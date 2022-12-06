@@ -37,6 +37,8 @@ PIPE_TRASH = -1 * PIPE_X
 # Bird Bounds
 BIRD_MIN_Y = 25
 BIRD_MAX_Y = FLOOR_Y
+# The center of the screen
+SCREEN_MIDDLE = int((BIRD_MIN_Y + BIRD_MAX_Y) / 2)
 # Bird Physics
 # Remember that y=0 is the top of the screen
 GRAVITY = 1600

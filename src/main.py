@@ -171,8 +171,10 @@ class TreeNode:
         PRECONDITION:   game_state is not None
         POSTCONDITION:  The score for this node is returned
         """
-
-        return self.game_state.bird.threat[0]
+        # Distance from the middle of the screen.
+        middle_delta = abs(self.game_state.bird.y - const.SCREEN_MIDDLE)
+        # Subtract the delta to lower the score of the bird the further it travels from the middle.
+        return self.game_state.bird.threat[0] - middle_delta
 
     def is_terminal(self):
         """
