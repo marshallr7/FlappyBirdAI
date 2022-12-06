@@ -57,6 +57,7 @@ surface_dict = {
     'base': img_base
 }
 
+
 # ###################################
 # #############[ Start ]#############
 # ########### Search Tree ###########
@@ -65,7 +66,20 @@ surface_dict = {
 
 
 class TreeNode:
-    # The game state that belongs to this node
+    """
+    NAME:           TreeNode
+    PURPOSE:        A node within a search tree that contains information about the GameState it represents.
+    INVARIANTS:     game_state is always set to what represents this node and should not be updated or changed.
+                    populated is true when the branches of this node have been created, false otherwise.
+                    parent is set to the node preceding this node in the game state simulation. None when this node is
+                        the current game state and not a potential future state.
+                    left_node is the potential future game state where the bird doesn't jump,
+                        None when unpopulated or when all of its branches lead to bird death
+                    right_node is the potential future game state where the bird does jump
+                        None when unpopulated or when all of its branches lead to bird death
+    """
+
+    # The game state that this node represents
     game_state: "GameState"
 
     # If this node has created its child nodes before, used to prevent researching and infinite recursion
@@ -79,6 +93,16 @@ class TreeNode:
     right_node: "TreeNode"
 
     def __init__(self, parent: "TreeNode", game_state: "GameState"):
+        """
+        NAME:           TreeNode.__init__
+        PARAMETERS:     parent: The parent node which precedes this nodes game_state, None when this is the root node
+                        game_state: the state of this game this node represents, never None
+        PURPOSE:        This method initializes fields for a new DrawableEntity instance.
+        PRECONDITION:   game_state and populated are set to a non None value,
+                        parent is set to the provided value,
+                        left_node and right_node are set to None.
+        POSTCONDITION:  This instance's fields are initialized to the provided parameters.
+        """
         self.game_state = game_state
         self.populated = False
         self.parent = parent
@@ -89,8 +113,12 @@ class TreeNode:
 
     def _populate_children(self):
         """
-        Create child nodes for this node
-        :return:
+        NAME:           TreeNode._populate_children
+        PARAMETERS:     No parameters
+        PURPOSE:        This method populates the branches of this node.
+        PRECONDITION:   This node has not populated its children before, populated is False
+        POSTCONDITION:  This node's branches are set to potential futures of the game state and are no longer None
+                        populated is set to True
         """
         self.populated = True
 
@@ -98,7 +126,7 @@ class TreeNode:
         left_state = copy.deepcopy(self.game_state)
         right_state = copy.deepcopy(self.game_state)
         right_state.bird.jump()
-        # Update the states
+        # Update the states, simulate the future
         left_state.do_update()
         right_state.do_update()
 
@@ -116,6 +144,14 @@ class TreeNode:
             self.right_node = None
 
     def get_best_child(self) -> "TreeNode":
+        """
+        NAME:           TreeNode.get_best_child
+        PARAMETERS:     No parameters
+        PURPOSE:        This method returns the best child node with the lowest threat level.
+        PRECONDITION:   This node is not terminal, populated is false and either node is not None
+        POSTCONDITION:  Both child nodes are populated if possible, and the best child node is returned
+        """
+
         if not self.populated:
             self._populate_children()
 
@@ -129,17 +165,33 @@ class TreeNode:
 
     def get_score(self) -> float:
         """
-        :return: the threat distance of the bird
+        NAME:           TreeNode.get_score
+        PARAMETERS:     No parameters
+        PURPOSE:        This method calculates how good the current game state is and returns it as a float.
+        PRECONDITION:   game_state is not None
+        POSTCONDITION:  The score for this node is returned
         """
+
         return self.game_state.bird.threat[0]
 
     def is_terminal(self):
         """
-        :return: true if the node has no children (bird is dead)
+        NAME:           TreeNode.is_terminal
+        PARAMETERS:     No parameters
+        PURPOSE:        This method determines if this node has no good branches
+        PRECONDITION:   none
+        POSTCONDITION:  True is returned if this node can be explored no further, False otherwise
         """
         return self.left_node is None and self.right_node is None
 
     def remove_child(self, child: "TreeNode"):
+        """
+        NAME:           TreeNode.remove_child
+        PARAMETERS:     child: the child node to remove
+        PURPOSE:        This method removes the provided child node from itself
+        PRECONDITION:   The child parameter is
+        POSTCONDITION:  True is returned if this node can be explored no further, False otherwise
+        """
         if self.left_node == child:
             # noinspection PyTypeChecker
             self.left_node = None
@@ -151,15 +203,22 @@ class TreeNode:
 
     def disintegrate(self):
         """
-        Destroy all references this node has, all references of child nodes,
-        and the reference the parent has to this node.
-        :return: None
+        NAME:           TreeNode.disintegrate
+        PARAMETERS:     none
+        PURPOSE:        This method recourses through child nodes before removing them from this instance to remove
+                            references to the nodes for garbage collection.
+        PRECONDITION:   The child parameter is
+        POSTCONDITION:  True is returned if this node can be explored no further, False otherwise
         """
         if self.left_node is not None:
             self.left_node.disintegrate()
+            # noinspection PyTypeChecker
+            self.left_node = None
 
         if self.right_node is not None:
             self.right_node.disintegrate()
+            # noinspection PyTypeChecker
+            self.right_node = None
 
 
 class Tree:
