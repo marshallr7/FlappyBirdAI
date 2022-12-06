@@ -303,7 +303,6 @@ class Tree:
         # Loop until we find a good route that leads to the frame limit
         # This expands and searches as it goes
         while self.depth_limit > len(self.path):
-            print(len(self.path))
             # Case #1, continuing down the tree
             next_node = self.tail.get_best_child()
             if not self.tail.is_terminal():
@@ -1098,6 +1097,7 @@ class GameState:
                 exit()
 
 
+# Driving game logic
 if __name__ == "__main__":
     # Parse arguments for if we want debugging features
     debug = bool(sys.argv[1]) if (len(sys.argv) > 1) else False
@@ -1109,27 +1109,39 @@ if __name__ == "__main__":
     # Allow deeper recursions, fix would be to limit the depth in each search call on each frame
     sys.setrecursionlimit(1000000)
 
+    # Initialize a new tree and game state
     tree = Tree(GameState(debug))
 
+    # Perform game update and search logic for each frame, loop until the bird cannot find a valid path.
     # path will always start with a length of 1
     while len(tree.path) > 0:
+        # Search for a valid path
         tree.search()
+        # Proceed to the next game state
         next_game_state = tree.proceed()
-        next_game_state.do_update()
+        # Draw the game state to the window
         next_game_state.do_draw(window_surface)
 
+        # Show the birds position in the future if debugging
         if debug:
             # Extremely hacky here, override the bird x pos to be "in the future", draw it, and set it back
+            # Skip indexes in the list to draw less birds
             indexes = list(range(const.TREE_STEP, len(tree.path), const.TREE_STEP))
-            indexes.append(len(tree.path) - 1)  # Manually append the last part of the path
+            # Manually append the last part of the path to clearly see when the bird encounters death
+            indexes.append(len(tree.path) - 1)
+            # Draw each bird to the window
             for i in indexes:
+                # Increment the bird X position
                 tree.path[i].game_state.bird.x += next_game_state.pipe_speed * next_game_state.delta * i
                 # The bird draw method in specific doesn't need the game state
                 # noinspection PyTypeChecker
                 tree.path[i].game_state.bird.draw(None, window_surface)
+                # Restore the bird X position
                 tree.path[i].game_state.bird.x = const.BIRD_POS_X
 
+        # Tell pygame we're done drawing and to update the display
         pygame.display.update()
-        time.sleep(const.TREE_DELTA)
-
-    exit(0)
+        # Sleep for the simulated duration of the game state
+        # This doesn't account for the draw times, so the frame rate is a bit lower than simulated, but this doesn't
+        #   affect the accuracy of the simulation, just playback.
+        time.sleep(next_game_state.delta)
