@@ -222,16 +222,43 @@ class TreeNode:
 
 
 class Tree:
+    """
+    NAME:           Tree
+    PURPOSE:        A Tree data structure similar to a binary search tree which contains the current game state at its
+                    root and future game states as its nodes/branches. As time progresses and frames are drawn, the
+                    root of the tree moves down the branch that is calculated to have the best odds of survival.
+    INVARIANTS:     root is the topmost node of the tree and is never None
+                    tail is one of the lowest nodes in the tree and is the current best node
+                    path is a list of nodes from the root to the tail, needed to access the next node to render a frame
+                    depth_limit is how far deep the search can go before exiting, same as how far into the future the
+                        tree can predict
+    """
     # The root node
     root: TreeNode
     # The ending node
     tail: TreeNode
     # Ordered list of nodes from the root node to the best ending node
+    # the length of this list also acts as the depth counter
     path: list[TreeNode]
     # The max depth of the search tree (frame lookahead)
     depth_limit: int
 
-    def __init__(self, game_state: "GameState"):
+    # This data structure lacks a list of visited nodes, as when a node has been fully explored and becomes terminal
+    #   it is removed from the structure. Which effectively performs the same function of preventing traveled nodes
+    #   from being revisited.
+
+    def __init__(self, game_state: "GameState") -> None:
+        """
+        NAME:           Tree.__init__
+        PARAMETERS:     game_state: the base game state to start this tree from, and to represent the root node with
+        PURPOSE:        This method initializes fields for a new Tree instance.
+        PRECONDITION:   game_state and populated are set to a non None value,
+                        parent is set to the provided value,
+                        left_node and right_node are set to None.
+        POSTCONDITION:  This instance's fields are initialized to the provided parameters.
+        """
+        # Override the frame time delta to our simulation speed
+        # This is copied to all updated nodes with deep copy, so it is effectively a fixed time
         game_state.delta = const.TREE_DELTA
         # noinspection PyTypeChecker
         self.root = TreeNode(None, game_state)
@@ -240,10 +267,15 @@ class Tree:
         self.path.append(self.root)
         self.depth_limit = const.TREE_DEPTH
 
-    def _climb(self):
+    def _climb(self) -> None:
         """
-        Climb up a node from the tail until there is a node with a non-terminal child
-        :return:
+        NAME:           Tree._climb
+        PARAMETERS:     none
+        PURPOSE:        This method climbs up from the tail node to the node above it.
+                            The tail node and path are updated accordingly.
+                            If the new tail node is terminal then this method becomes recursive on it.
+        PRECONDITION:   The tail is not terminal, and the tail is not the root node.
+        POSTCONDITION:  True is returned if this node can be explored no further, False otherwise
         """
         if not self.tail.is_terminal():
             raise Exception("Back propagating when tail isn't terminal!")
@@ -258,10 +290,15 @@ class Tree:
         if parent.is_terminal():
             self._climb()
 
-    def search(self):
+    def search(self) -> None:
         """
-        Search for the best path from the current tail
-        :return:
+        NAME:           Tree.search
+        PARAMETERS:     none
+        PURPOSE:        This method starts from the current tail node and searches down through the tree until
+                            the maximum depth is reached. If the bird dies during the search then the tree is climbed
+                            back up to find another path where the bird survives.
+        PRECONDITION:   The current depth of the tree is not at the depth limit
+        POSTCONDITION:  A new best route is calculated where the bird lives.
         """
         # Loop until we find a good route that leads to the frame limit
         # This expands and searches as it goes
@@ -279,16 +316,23 @@ class Tree:
             # Case #2, node is terminal, climb and let the next loop search
             self._climb()
 
-    def proceed(self):
+    def proceed(self) -> "GameState":
         """
-        advance the root to the next node in the path and disintegrate the old root
-        :return: the new root's game state
+        NAME:           Tree.proceed
+        PARAMETERS:     none
+        PURPOSE:        This method advances the root of the tree to the next best node, then removes the new root
+                            from its parent to disintegrate references of the old root and its branches.
+                            The path has the first element removed.
+                            The game state of the new root is then returned.
+        PRECONDITION:   The root node is not the tail node, and the length of path is at least 2
+        POSTCONDITION:  The game state of the new root is returned
         """
         new_root = self.path[1]
         self.path.pop(0)
         self.root.remove_child(new_root)
         self.root.disintegrate()
         self.root = new_root
+        new_root.parent = None
         return self.root.game_state
 
 
